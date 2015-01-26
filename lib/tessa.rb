@@ -1,5 +1,13 @@
 require "tessa/version"
 
+require "tessa/config"
+
 module Tessa
-  # Your code goes here...
+  def self.config
+    @config ||= Config.new
+  end
+
+  def self.setup
+    yield config
+  end
 end
