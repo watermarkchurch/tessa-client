@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = Tessa::VERSION
   spec.authors       = ["Justin Powell", "Travis Petticrew"]
   spec.email         = ["jpowell@watermark.org", "tpetticrew@watermark.org"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
-  spec.homepage      = ""
+  spec.summary       = %q{Manage your assets.}
+  spec.description   = %q{Manage your assets.}
+  spec.homepage      = "https://github.com/watermarkchurch/tessa"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
