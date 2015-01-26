@@ -1,6 +1,7 @@
 require "tessa/version"
 
 require "tessa/config"
+require "tessa/asset"
 
 module Tessa
   def self.config
