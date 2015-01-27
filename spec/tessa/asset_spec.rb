@@ -5,6 +5,7 @@ RSpec.describe Tessa::Asset do
   let(:metadata) { { size: 1234 } }
   let(:uri) { "file:///tmp/file" }
   let(:file) { :temp_file }
+  let(:backend) { double(:backend) }
 
   describe "#initialize" do
     subject(:klass) { described_class }
@@ -63,20 +64,27 @@ RSpec.describe Tessa::Asset do
 
   describe "#download" do
     subject(:asset) { described_class.new(uuid: uuid, uri: uri) }
+    let(:db) { double(:db, fetch: backend) }
 
     context "uri is blank" do
-      it "raises an error"
+      let(:uri) { '' }
+
+      it "raises an error" do
+        expect { asset.download(backend_db: db) }.to raise_error
+      end
     end
 
-    it "calls download on Backend"
+    it "calls download on backend" do
+      data = 'test data'
+      expect(backend).to receive(:download).with(asset.uri).and_return(data)
+      expect(asset.download(backend_db: db)).to eq(data)
+    end
   end
 
   describe "#upload" do
     subject(:asset) { described_class.new(uuid: uuid) }
 
     it "uses default backend"
-
-    let(:backend) { double(:backend) }
 
     it "calls upload on backend and sets uri to response" do
       expect(backend).to receive(:upload).with(file).and_return(uri)

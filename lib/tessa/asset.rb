@@ -11,8 +11,9 @@ module Tessa
       @uri = URI(uri || "")
     end
 
-    def download(resolves_backend: -> (uri) { Backend[uri.scheme] })
-      backend = resolves_backend.call(uri)
+    def download(backend_db: Backend.db)
+      raise if uri.scheme.nil?
+      backend = backend_db.fetch(uri.scheme)
       backend.download(uri)
     end
 
