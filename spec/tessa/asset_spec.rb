@@ -23,9 +23,26 @@ RSpec.describe Tessa::Asset do
       expect(obj.metadata).to eq(metadata)
     end
 
-    it "assigns :uri to attribute" do
-      obj = subject.new(uuid: uuid, uri: uri)
-      expect(obj.uri).to eq(uri)
+    context "a valid URI string for :uri" do
+      it "creates a URI object" do
+        obj = subject.new(uuid: uuid, uri: uri)
+        expect(obj.uri).to be_a(URI::Generic)
+      end
+    end
+
+    context "an invalid URI string for :uri" do
+      let(:uri) { "::::" }
+
+      it "raises an error" do
+        expect { subject.new(uuid: uuid, uri: uri) }.to raise_error(URI::InvalidURIError)
+      end
+    end
+
+    context "no URI passed" do
+      it "initializes an empty URI" do
+        obj = subject.new(uuid: uuid)
+        expect(obj.uri).to respond_to(:scheme)
+      end
     end
   end
 
