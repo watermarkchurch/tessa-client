@@ -3,7 +3,7 @@ require 'spec_helper'
 RSpec.describe Tessa::Asset do
   let(:uuid) { "abc" }
   let(:metadata) { { size: 1234 } }
-  let(:location_url) { "file:///tmp/file" }
+  let(:uri) { "file:///tmp/file" }
   let(:file) { :temp_file }
 
   describe "#initialize" do
@@ -23,9 +23,9 @@ RSpec.describe Tessa::Asset do
       expect(obj.metadata).to eq(metadata)
     end
 
-    it "assigns :location_url to attribute" do
-      obj = subject.new(uuid: uuid, location_url: location_url)
-      expect(obj.location_url).to eq(location_url)
+    it "assigns :uri to attribute" do
+      obj = subject.new(uuid: uuid, uri: uri)
+      expect(obj.uri).to eq(uri)
     end
   end
 
@@ -33,7 +33,7 @@ RSpec.describe Tessa::Asset do
     it "is a hash"
   end
 
-  describe "location_url" do
+  describe "uri" do
     it "is a string"
   end
 
@@ -44,17 +44,23 @@ RSpec.describe Tessa::Asset do
   describe "file" do
   end
 
-  describe "#write" do
+  describe "#download" do
+    subject(:asset) { described_class.new(uuid: uuid, uri: uri) }
+
+    it ""
+  end
+
+  describe "#upload" do
     subject(:asset) { described_class.new(uuid: uuid) }
 
     it "uses default backend"
 
     let(:backend) { double(:backend) }
 
-    it "calls write on backend and sets location_url to response" do
-      expect(backend).to receive(:write).with(file).and_return(location_url)
-      asset.write(file, backend: backend)
-      expect(asset.location_url).to eq(location_url)
+    it "calls upload on backend and sets uri to response" do
+      expect(backend).to receive(:upload).with(file).and_return(uri)
+      asset.upload(file, backend: backend)
+      expect(asset.uri).to eq(uri)
     end
   end
 end

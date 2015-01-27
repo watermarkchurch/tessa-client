@@ -1,15 +1,15 @@
 module Tessa
   class Asset
-    attr_reader :uuid, :metadata, :location_url
+    attr_reader :uuid, :metadata, :uri
 
-    def initialize(uuid:, metadata: nil, location_url: nil)
+    def initialize(uuid:, metadata: nil, uri: nil)
       @uuid = uuid
       @metadata = metadata
-      @location_url = location_url
+      @uri = uri
     end
 
-    def write(file, backend: Tessa.default_backend)
-      @location_url = backend.write(file)
+    def upload(file, backend: Tessa.default_backend)
+      @uri = backend.upload(file)
     end
   end
 end
