@@ -1,4 +1,5 @@
 require 'uri'
+require 'securerandom'
 
 module Tessa
   class Asset
@@ -12,6 +13,10 @@ module Tessa
 
     def upload(file, backend: Tessa.default_backend)
       @uri = backend.upload(file)
+    end
+
+    def self.create
+      new(uuid: SecureRandom.uuid)
     end
   end
 end

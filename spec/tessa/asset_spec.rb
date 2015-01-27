@@ -80,4 +80,15 @@ RSpec.describe Tessa::Asset do
       expect(asset.uri).to eq(uri)
     end
   end
+
+  describe "::create" do
+    it "initializes a new Asset" do
+      expect(described_class.create).to be_a(described_class)
+    end
+
+    it "sets uuid to a new uuid" do
+      obj = described_class.create
+      expect(obj.uuid).to match(/^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$/)
+    end
+  end
 end
