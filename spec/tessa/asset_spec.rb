@@ -74,6 +74,8 @@ RSpec.describe Tessa::Asset do
       end
     end
 
+    it "uses default backend db"
+
     it "calls download on backend" do
       data = 'test data'
       expect(backend).to receive(:download).with(asset.uri).and_return(data)
