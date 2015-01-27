@@ -11,7 +11,12 @@ module Tessa
       @uri = URI(uri || "")
     end
 
-    def upload(file, backend: Tessa.default_backend)
+    def download(resolves_backend: -> (uri) { Backend[uri.scheme] })
+      backend = resolves_backend.call(uri)
+      backend.download(uri)
+    end
+
+    def upload(file, backend: Tessa.config.default_backend)
       @uri = backend.upload(file)
     end
 

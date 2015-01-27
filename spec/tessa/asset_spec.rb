@@ -64,7 +64,11 @@ RSpec.describe Tessa::Asset do
   describe "#download" do
     subject(:asset) { described_class.new(uuid: uuid, uri: uri) }
 
-    it ""
+    context "uri is blank" do
+      it "raises an error"
+    end
+
+    it "calls download on Backend"
   end
 
   describe "#upload" do
