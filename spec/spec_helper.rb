@@ -1,6 +1,3 @@
-GEM_ROOT_PATH = File.expand_path(File.join(__FILE__, "..", ".."))
-$LOAD_PATH.unshift(File.join(GEM_ROOT_PATH, "lib"))
-
 require 'tessa'
 
 RSpec.configure do |config|
