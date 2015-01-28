@@ -1,6 +1,6 @@
 # Tessa
 
-TODO: Write a gem description
+Manage your assets.
 
 ## Installation
 
