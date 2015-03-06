@@ -40,6 +40,18 @@ RSpec.describe Tessa::Config do
     end
   end
 
+  describe "#url" do
+    it_behaves_like "defaults to environment variable" do
+      let(:variable_name) { 'TESSA_URL' }
+      subject(:url) { config.url }
+    end
+
+    it "behaves like a normal accessor" do
+      config.url = "my-new-value"
+      expect(config.url).to eq("my-new-value")
+    end
+  end
+
   describe "#default_strategy" do
     it_behaves_like "defaults to environment variable" do
       let(:variable_name) { 'TESSA_DEFAULT_STRATEGY' }
@@ -49,6 +61,48 @@ RSpec.describe Tessa::Config do
     it "behaves like a normal accessor" do
       config.default_strategy = "my-new-value"
       expect(config.default_strategy).to eq("my-new-value")
+    end
+  end
+
+  describe "#connection" do
+    it "is a Faraday::Connection" do
+      expect(config.connection).to be_a(Faraday::Connection)
+    end
+
+    context "with values configured" do
+      subject(:connection) { config.connection }
+      before { args.each { |k, v| config.send("#{k}=", v) } }
+      let(:args) {
+        {
+          url: "http://tessa.test",
+          username: "username",
+          password: "password",
+        }
+      }
+
+      it "sets faraday's url prefix to our url" do
+        expect(connection.url_prefix.to_s).to match(config.url)
+      end
+
+      context "with faraday spy" do
+        let(:spy) { instance_spy(Faraday::Connection) }
+        before do
+          expect(Faraday).to receive(:new).and_yield(spy)
+          connection
+        end
+
+        it "sets up digest auth params" do
+          expect(spy).to have_received(:request).with(:digest, args[:username], args[:password])
+        end
+
+        it "configures the default adapter" do
+          expect(spy).to have_received(:adapter).with(:net_http)
+        end
+      end
+    end
+
+    it "caches the result" do
+      expect(config.connection.object_id).to eq(config.connection.object_id)
     end
   end
 end

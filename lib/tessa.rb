@@ -1,5 +1,8 @@
 require "tessa/version"
 
+require "faraday"
+require "faraday/digestauth"
+
 require "tessa/config"
 require "tessa/asset"
 require "tessa/upload"
