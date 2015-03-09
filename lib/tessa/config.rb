@@ -1,14 +1,11 @@
 module Tessa
   class Config
-    attr_accessor :username, :password
-    attr_accessor :url, :default_strategy
+    include Virtus.model
 
-    def initialize
-      @username ||= ENV['TESSA_USERNAME']
-      @password ||= ENV['TESSA_PASSWORD']
-      @url ||= ENV['TESSA_URL']
-      @default_strategy ||= ENV['TESSA_DEFAULT_STRATEGY']
-    end
+    attribute :username, String, default: -> (*_) { ENV['TESSA_USERNAME'] }
+    attribute :password, String, default: -> (*_) { ENV['TESSA_PASSWORD'] }
+    attribute :url, String, default: -> (*_) { ENV['TESSA_URL'] }
+    attribute :default_strategy, String, default: -> (*_) { ENV['TESSA_DEFAULT_STRATEGY'] }
 
     def connection
       @connection ||= Faraday.new(url: url) do |conn|
