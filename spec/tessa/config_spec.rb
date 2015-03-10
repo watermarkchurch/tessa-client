@@ -95,6 +95,10 @@ RSpec.describe Tessa::Config do
           expect(spy).to have_received(:request).with(:digest, args[:username], args[:password])
         end
 
+        it "sets up url_encoded request handler" do
+          expect(spy).to have_received(:request).with(:url_encoded)
+        end
+
         it "configures the default adapter" do
           expect(spy).to have_received(:adapter).with(:net_http)
         end
