@@ -61,14 +61,14 @@ RSpec.describe Tessa::Upload do
     end
   end
 
-  describe "#complete" do
-    subject(:call) { upload.complete(call_args) }
+  describe "#complete!" do
+    subject(:call) { upload.complete!(call_args) }
 
     include_examples "remote call macro", :patch, "/success", Tessa::Asset
   end
 
-  describe "#cancel" do
-    subject(:call) { upload.cancel(call_args) }
+  describe "#cancel!" do
+    subject(:call) { upload.cancel!(call_args) }
 
     include_examples "remote call macro", :patch, "/cancel", Tessa::Asset
   end
