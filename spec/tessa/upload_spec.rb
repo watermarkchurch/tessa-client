@@ -1,18 +1,18 @@
 require 'spec_helper'
 
 RSpec.describe Tessa::Upload do
+  subject(:upload) { described_class.new(args) }
   let(:args) {
     {
-      success_url: "http://example.com/success",
-      cancel_url: "http://example.com/cancel",
-      upload_url: "http://example.com/upload",
+      success_url: "/success",
+      cancel_url: "/cancel",
+      upload_url: "/upload",
       upload_method: "put",
     }
   }
 
   describe "#initialize" do
     context "with all arguments" do
-      subject(:upload) { described_class.new(args) }
       it "sets success_url to attribute" do
         expect(upload.success_url).to eq(args[:success_url])
       end
@@ -31,25 +31,52 @@ RSpec.describe Tessa::Upload do
     end
   end
 
-  describe "::create" do
+  shared_examples_for "remote call macro" do |method, path, return_type|
     let(:remote_response) { {} }
     let(:faraday_stubs) {
       Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.post("/uploads") { |env| [200, {}, remote_response.to_json] }
+        stub.send(method, path) { |env| [200, {}, remote_response.to_json] }
       end
     }
     let(:connection) { Faraday.new { |f| f.adapter :test, faraday_stubs } }
+    let(:call_args) { { connection: connection } }
 
-    it "calls post('/uploads') on connection" do
-      expect(connection).to receive(:post).with("/uploads", any_args).and_call_original
-      described_class.create(connection: connection)
+    it "calls #{method} method with #{path}" do
+      expect(connection).to receive(method).with(path, any_args).and_call_original
+      call
     end
 
-    it "uses Tessa.config.connection when no connection passed" do
-      expect(Tessa.config).to receive(:connection).and_return(connection)
-      expect(connection).to receive(:post).and_call_original
-      described_class.create
+    context "with no connection passed" do
+      let(:call_args) { {} }
+
+      it "defaults connection to Tessa.config.connection" do
+        expect(Tessa.config).to receive(:connection).and_return(connection)
+        expect(connection).to receive(method).and_call_original
+        call
+      end
     end
+
+    it "returns an instance of #{return_type}" do
+      expect(call).to be_a(return_type)
+    end
+  end
+
+  describe "#complete" do
+    subject(:call) { upload.complete(call_args) }
+
+    include_examples "remote call macro", :patch, "/success", Tessa::Asset
+  end
+
+  describe "#cancel" do
+    subject(:call) { upload.cancel(call_args) }
+
+    include_examples "remote call macro", :patch, "/cancel", Tessa::Asset
+  end
+
+  describe "::create" do
+    subject(:call) { described_class.create(call_args) }
+
+    include_examples "remote call macro", :post, "/uploads", Tessa::Upload
 
     context "with a full response" do
       let(:remote_response) { args }

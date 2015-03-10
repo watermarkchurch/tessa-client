@@ -6,6 +6,7 @@ require "virtus"
 require "json"
 
 require "tessa/config"
+require "tessa/response_factory"
 require "tessa/asset"
 require "tessa/upload"
 

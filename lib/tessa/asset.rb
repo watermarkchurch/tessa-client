@@ -1,6 +1,7 @@
 module Tessa
   class Asset
     include Virtus.model
+    extend ResponseFactory
 
     attribute :id, Integer
     attribute :status, String
@@ -13,15 +14,6 @@ module Tessa
     def self.find(*ids,
                   connection: Tessa.config.connection)
       new_from_response connection.get("/assets/#{ids.join(",")}")
-    end
-
-    def self.new_from_response(response)
-      case json = JSON.parse(response.body)
-      when Array
-        json.map { |record| new record }
-      when Hash
-        new json
-      end
     end
   end
 end
