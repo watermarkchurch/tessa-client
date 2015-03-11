@@ -56,6 +56,18 @@ RSpec.describe Tessa::Upload do
       end
     end
 
+    context "when response is not successful" do
+      let(:faraday_stubs) {
+        Faraday::Adapter::Test::Stubs.new do |stub|
+          stub.send(method, path) { |env| [422, {}, { "error" => "error" }.to_json] }
+        end
+      }
+
+      it "raises Tessa::RequestFailed" do
+        expect{ call }.to raise_error(Tessa::RequestFailed)
+      end
+    end
+
     it "returns an instance of #{return_type}" do
       expect(call).to be_a(return_type)
     end

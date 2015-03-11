@@ -18,4 +18,6 @@ module Tessa
   def self.setup
     yield config
   end
+
+  class RequestFailed < StandardError; end
 end
