@@ -17,7 +17,7 @@ module Tessa
     end
 
     def self.create(connection: Tessa.config.connection,
-                    strategy: Tessa.config.default_strategy,
+                    strategy: Tessa.config.strategy,
                     **options)
       new_from_response connection.post('/uploads', options.merge(strategy: strategy))
     end

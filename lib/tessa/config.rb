@@ -2,10 +2,12 @@ module Tessa
   class Config
     include Virtus.model
 
+    DEFAULT_STRATEGY = "default"
+
     attribute :username, String, default: -> (*_) { ENV['TESSA_USERNAME'] }
     attribute :password, String, default: -> (*_) { ENV['TESSA_PASSWORD'] }
     attribute :url, String, default: -> (*_) { ENV['TESSA_URL'] }
-    attribute :default_strategy, String, default: -> (*_) { ENV['TESSA_DEFAULT_STRATEGY'] }
+    attribute :strategy, String, default: -> (*_) { ENV['TESSA_STRATEGY'] || DEFAULT_STRATEGY }
 
     def connection
       @connection ||= Faraday.new(url: url) do |conn|

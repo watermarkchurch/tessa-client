@@ -91,8 +91,8 @@ RSpec.describe Tessa::Upload do
     end
 
     describe ":strategy param" do
-      it "defaults to config.default_strategy" do
-        expect(Tessa.config).to receive(:default_strategy).and_return(:my_default)
+      it "defaults to config.strategy" do
+        expect(Tessa.config).to receive(:strategy).and_return(:my_default)
         expect_post_with_hash_including(strategy: :my_default)
         described_class.create(connection: connection)
       end

@@ -52,15 +52,19 @@ RSpec.describe Tessa::Config do
     end
   end
 
-  describe "#default_strategy" do
+  describe "#strategy" do
     it_behaves_like "defaults to environment variable" do
-      let(:variable_name) { 'TESSA_DEFAULT_STRATEGY' }
-      subject(:default_strategy) { config.default_strategy }
+      let(:variable_name) { 'TESSA_STRATEGY' }
+      subject(:strategy) { config.strategy }
+    end
+
+    it "uses the string 'default' when no envvar passed" do
+      expect(config.strategy).to eq("default")
     end
 
     it "behaves like a normal accessor" do
-      config.default_strategy = "my-new-value"
-      expect(config.default_strategy).to eq("my-new-value")
+      config.strategy = "my-new-value"
+      expect(config.strategy).to eq("my-new-value")
     end
   end
 
