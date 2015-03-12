@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 RSpec.describe Tessa::Asset do
+  subject(:asset) { described_class.new(args) }
   let(:args) {
     {
       id: 123,
@@ -15,8 +16,6 @@ RSpec.describe Tessa::Asset do
 
   describe "#initialize" do
     context "with all arguments" do
-      subject(:asset) { described_class.new(args) }
-
       it "sets id to attribute" do
         expect(asset.id).to eq(args[:id])
       end
@@ -46,6 +45,18 @@ RSpec.describe Tessa::Asset do
       end
 
     end
+  end
+
+  describe "#complete!" do
+    subject(:call) { asset.complete!(call_args) }
+
+    include_examples "remote call macro", :patch, "/assets/123/completed", Tessa::Asset
+  end
+
+  describe "#cancel!" do
+    subject(:call) { asset.cancel!(call_args) }
+
+    include_examples "remote call macro", :patch, "/assets/123/cancelled", Tessa::Asset
   end
 
   describe "#find" do

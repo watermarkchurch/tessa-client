@@ -11,6 +11,14 @@ module Tessa
     attribute :private_url, String
     attribute :delete_url, String
 
+    def complete!(connection: Tessa.config.connection)
+      Asset.new_from_response connection.patch("/assets/#{id}/completed")
+    end
+
+    def cancel!(connection: Tessa.config.connection)
+      Asset.new_from_response connection.patch("/assets/#{id}/cancelled")
+    end
+
     def self.find(*ids,
                   connection: Tessa.config.connection)
       new_from_response connection.get("/assets/#{ids.join(",")}")
