@@ -19,6 +19,10 @@ module Tessa
       Asset.new_from_response connection.patch("/assets/#{id}/cancelled")
     end
 
+    def delete!(connection: Tessa.config.connection)
+      Asset.new_from_response connection.delete("/assets/#{id}")
+    end
+
     def self.find(*ids,
                   connection: Tessa.config.connection)
       new_from_response connection.get("/assets/#{ids.join(",")}")
