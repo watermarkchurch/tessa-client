@@ -19,5 +19,13 @@ module Tessa
     yield config
   end
 
-  class RequestFailed < StandardError; end
+  class RequestFailed < StandardError
+    attr_reader :response
+
+    def initialize(message=nil, response=nil)
+      super(message)
+      @response = response
+    end
+  end
+
 end

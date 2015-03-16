@@ -31,7 +31,10 @@ RSpec.shared_examples_for "remote call macro" do |method, path, return_type|
     }
 
     it "raises Tessa::RequestFailed" do
-      expect{ call }.to raise_error(Tessa::RequestFailed)
+      expect{ call }.to raise_error { |error|
+        expect(error).to be_a(Tessa::RequestFailed)
+        expect(error.response).to be_a(Faraday::Response)
+      }
     end
   end
 
