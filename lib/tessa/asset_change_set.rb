@@ -13,5 +13,9 @@ module Tessa
       changes.select { |change|
         (scoped_ids + additional_scoped_ids).include?(change.id) }
     end
+
+    def apply(**options)
+      scoped_changes(**options).each(&:apply)
+    end
   end
 end

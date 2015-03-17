@@ -66,4 +66,27 @@ RSpec.describe Tessa::AssetChangeSet do
     end
   end
 
+  describe "#apply" do
+    let(:args) {
+      {
+        changes: [
+          Tessa::AssetChange.new(id: 1),
+          Tessa::AssetChange.new(id: 2)],
+        scoped_ids: [1],
+      }
+    }
+
+    it "calls apply on each scoped change" do
+      expect(set.changes[0]).to receive(:apply)
+      expect(set.changes[1]).not_to receive(:apply)
+      set.apply
+    end
+
+    it "calls apply on scoped plus additional ids from :additional_scoped_ids" do
+      expect(set.changes[0]).to receive(:apply)
+      expect(set.changes[1]).to receive(:apply)
+      set.apply(additional_scoped_ids: [2])
+    end
+  end
+
 end

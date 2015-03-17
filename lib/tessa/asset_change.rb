@@ -14,5 +14,20 @@ module Tessa
         super
       end
     end
+
+    def apply
+      case action
+      when "add"
+        asset.complete!
+      when "remove"
+        asset.delete!
+      end
+    end
+
+    private
+
+    def asset
+      Tessa::Asset.new(id: id)
+    end
   end
 end
