@@ -40,4 +40,30 @@ RSpec.describe Tessa::AssetChangeSet do
     end
   end
 
+  describe "#scoped_changes" do
+    context "with changes not contained in scoped ids" do
+      let(:args) {
+        {
+          changes: [
+            Tessa::AssetChange.new(id: 1),
+            Tessa::AssetChange.new(id: 2),
+            Tessa::AssetChange.new(id: 3),
+            Tessa::AssetChange.new(id: 4)],
+          scoped_ids: [1, 2],
+        }
+      }
+
+      it "only returns the scoped changes" do
+        expect(set.scoped_changes.size).to eq(2)
+        expect(set.scoped_changes.map(&:id)).to eq([1, 2])
+      end
+
+      it "will return scoped plus additional ids passed in :additional_scoped_ids" do
+        scoped_changes = set.scoped_changes(additional_scoped_ids: [3])
+        expect(scoped_changes.size).to eq(3)
+        expect(scoped_changes.map(&:id)).to eq([1, 2, 3])
+      end
+    end
+  end
+
 end

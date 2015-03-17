@@ -8,5 +8,10 @@ module Tessa
     def scoped_ids=(new_ids)
       super new_ids.compact
     end
+
+    def scoped_changes(additional_scoped_ids: [])
+      changes.select { |change|
+        (scoped_ids + additional_scoped_ids).include?(change.id) }
+    end
   end
 end
