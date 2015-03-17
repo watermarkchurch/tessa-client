@@ -10,6 +10,7 @@ require "tessa/response_factory"
 require "tessa/asset"
 require "tessa/asset_change"
 require "tessa/asset_change_set"
+require "tessa/model_field"
 require "tessa/upload"
 
 
