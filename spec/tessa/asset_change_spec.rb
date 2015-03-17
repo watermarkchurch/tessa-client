@@ -10,12 +10,26 @@ RSpec.describe Tessa::AssetChange do
   }
 
   describe "#initialize" do
-    it "sets id" do
-      expect(subject.id).to eq(123)
+    context "with hash args" do
+      it "sets id" do
+        expect(subject.id).to eq(123)
+      end
+
+      it "sets action" do
+        expect(subject.action).to eq("add")
+      end
     end
 
-    it "sets action" do
-      expect(subject.action).to eq("add")
+    context "with array arg" do
+      let(:args) { [123, { "action" => "add" }] }
+
+      it "sets id" do
+        expect(subject.id).to eq(123)
+      end
+
+      it "sets action" do
+        expect(subject.action).to eq("add")
+      end
     end
   end
 
