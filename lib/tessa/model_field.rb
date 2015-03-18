@@ -11,19 +11,15 @@ module Tessa
       super || "#{name}#{default_id_field_suffix}"
     end
 
-    def set(value, on:)
-      previous_ids = [*on.public_send(id_field)]
-      ids = previous_ids.dup
+    def apply(set, on:)
+      ids = [*on.public_send(id_field)]
 
-      value = [*value] if value.is_a?(Asset)
-
-      case value
-      when Array
-        ids = value.collect(&:id)
-      when AssetChangeSet
-        add_ids = value.scoped_changes.select(&:add?).collect(&:id)
-        remove_ids = value.scoped_changes.select(&:remove?).collect(&:id)
-        ids = previous_ids + add_ids - remove_ids
+      set.scoped_changes.each do |change|
+        if change.add?
+          ids << change.id
+        elsif change.remove?
+          ids.delete change.id
+        end
       end
 
       if multiple?
@@ -43,6 +39,19 @@ module Tessa
         AssetChangeSet.new.tap { |set| set.add(value) }
       else
         AssetChangeSet.new
+      end
+    end
+
+    def removal_change_set_for(value, on:)
+      if !(multiple? && value.is_a?(AssetChangeSet))
+      end
+    end
+
+    def intersection_change_set(ids, on:)
+      AssetChangeSet.new.tap do |change_set|
+        ([*on.public_send(id_field)] - ids).each do |id|
+          change_set.remove(id)
+        end
       end
     end
 

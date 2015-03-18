@@ -24,18 +24,14 @@ module Tessa
         define_method("#{name}=") do |value|
           change_set = field.change_set_for(value)
 
-          # Handle removing previous items in change set
-          if !field.multiple? || !value.is_a?(AssetChangeSet)
-            previous_ids = [*public_send(field.id_field)]
+          if !(field.multiple? && value.is_a?(AssetChangeSet))
             new_ids = change_set.scoped_changes.select(&:add?).map(&:id)
-            (previous_ids - new_ids).each do |id|
-              change_set.remove(id)
-            end
+            change_set += field.intersection_change_set(new_ids, on: self)
           end
 
           pending_tessa_change_sets[name] += change_set
 
-          field.set(value, on: self)
+          field.apply(change_set, on: self)
         end
       end
 
