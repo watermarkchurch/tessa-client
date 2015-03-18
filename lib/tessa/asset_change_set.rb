@@ -23,5 +23,28 @@ module Tessa
       self.scoped_ids = (self.scoped_ids + b.scoped_ids).uniq
       self
     end
+
+    def add(value)
+      id = id_from_asset(value)
+      changes << AssetChange.new(id: id, action: "add")
+      scoped_ids << id
+    end
+
+    def remove(value)
+      id = id_from_asset(value)
+      changes << AssetChange.new(id: id, action: "remove")
+      scoped_ids << id
+    end
+
+    private
+
+    def id_from_asset(value)
+      case value
+      when Asset
+        value.id
+      when Fixnum
+        value
+      end
+    end
   end
 end

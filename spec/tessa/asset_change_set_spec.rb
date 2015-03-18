@@ -122,4 +122,69 @@ RSpec.describe Tessa::AssetChangeSet do
     end
   end
 
+  describe "#add" do
+    let(:args) { {} }
+    let(:asset) { Tessa::Asset.new(id: 1) }
+
+    shared_examples_for "adds the represented asset" do
+      it "adds an 'add' change for this asset" do
+        expect(set.changes[0].id).to eq(1)
+        expect(set.changes[0].action).to eq("add")
+      end
+
+      it "adds the asset id to the scoped_ids array" do
+        expect(set.scoped_ids).to eq([1])
+      end
+    end
+
+    context "when passed an asset" do
+      before do
+        set.add(asset)
+      end
+
+      it_behaves_like "adds the represented asset"
+    end
+
+    context "when passed an integer id" do
+      before do
+        set.add(1)
+      end
+
+      it_behaves_like "adds the represented asset"
+    end
+  end
+
+  describe "#remove" do
+    let(:args) { {} }
+    let(:asset) { Tessa::Asset.new(id: 1) }
+
+    shared_examples_for "removes the represented asset" do
+      it "adds a 'remove' change for this asset" do
+        expect(set.changes[0].id).to eq(1)
+        expect(set.changes[0].action).to eq("remove")
+      end
+
+      it "adds the asset id to the scoped_ids array" do
+        expect(set.scoped_ids).to eq([1])
+      end
+    end
+
+    context "when passed an asset" do
+      before do
+        set.remove(asset)
+      end
+
+      it_behaves_like "removes the represented asset"
+    end
+
+    context "when passed an integer id" do
+      before do
+        set.remove(1)
+      end
+
+      it_behaves_like "removes the represented asset"
+    end
+
+  end
+
 end
