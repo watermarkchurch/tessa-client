@@ -16,10 +16,9 @@ module Tessa
     end
 
     def apply
-      case action
-      when "add"
+      if add?
         asset.complete!
-      when "remove"
+      elsif remove?
         asset.delete!
       end
     end
