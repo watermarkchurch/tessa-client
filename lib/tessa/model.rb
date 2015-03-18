@@ -1,3 +1,5 @@
+require 'tessa/model/field'
+
 module Tessa
   module Model
 
@@ -17,7 +19,7 @@ module Tessa
     module ClassMethods
 
       def asset(name, args={})
-        field = tessa_fields[name] = ModelField.new(args.merge(name: name))
+        field = tessa_fields[name] = Field.new(args.merge(name: name))
 
         define_method(name) do
           if instance_variable_defined?(ivar = "@#{name}")

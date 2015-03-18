@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Tessa::ModelField do
+RSpec.describe Tessa::Model::Field do
   subject(:field) { described_class.new(attrs) }
   let(:attrs) { {} }
 

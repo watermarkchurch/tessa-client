@@ -9,7 +9,7 @@ RSpec.describe Tessa::Model do
   describe "::asset" do
     it "creates ModelField and sets it by name to @tessa_fields" do
       model.asset :new_field
-      expect(model.tessa_fields[:new_field]).to be_a(Tessa::ModelField)
+      expect(model.tessa_fields[:new_field]).to be_a(Tessa::Model::Field)
     end
 
     context "with a field named :avatar" do
