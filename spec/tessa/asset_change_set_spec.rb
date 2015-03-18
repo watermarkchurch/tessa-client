@@ -89,4 +89,37 @@ RSpec.describe Tessa::AssetChangeSet do
     end
   end
 
+  describe "#+" do
+    let(:a) {
+      described_class.new(
+        changes: [Tessa::AssetChange.new(id: 1, action: 'add')],
+        scoped_ids: [1],
+      )
+    }
+    let(:b) {
+      described_class.new(
+        changes: [Tessa::AssetChange.new(id: 2, action: 'add')],
+        scoped_ids: [2],
+      )
+    }
+    subject(:sum) { a + b }
+
+    it "concatenates the values of changes" do
+      expect(sum.changes.collect(&:id)).to eq([1, 2])
+    end
+
+    it "concatenates the values of scoped_ids" do
+      expect(sum.scoped_ids).to eq([1, 2])
+    end
+
+    context "with duplicate entries" do
+      subject(:sum) { a + b + b }
+
+      it "only includes unique values" do
+        expect(sum.changes.collect(&:id)).to eq([1, 2])
+        expect(sum.scoped_ids).to eq([1, 2])
+      end
+    end
+  end
+
 end

@@ -17,5 +17,11 @@ module Tessa
     def apply(**options)
       scoped_changes(**options).each(&:apply)
     end
+
+    def +(b)
+      self.changes = (self.changes + b.changes).uniq
+      self.scoped_ids = (self.scoped_ids + b.scoped_ids).uniq
+      self
+    end
   end
 end
