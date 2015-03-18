@@ -19,7 +19,16 @@ module Tessa
       def asset(name, args={})
         field = tessa_fields[name] = ModelField.new(args.merge(name: name))
 
-        define_method(name) {}
+        define_method(name) do
+          if instance_variable_defined?(ivar = "@#{name}")
+            instance_variable_get(ivar)
+          else
+            instance_variable_set(
+              ivar,
+              Tessa::Asset.find(public_send(field.id_field))
+            )
+          end
+        end
 
         define_method("#{name}=") do |value|
           change_set = field.change_set_for(value)

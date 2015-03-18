@@ -238,4 +238,47 @@ RSpec.describe Tessa::Model do
       end
     end
   end
+
+  describe "#asset_getter" do
+    let(:instance) { model.new }
+    subject(:getter) { instance.file }
+
+    context "with a multiple typed field" do
+      before do
+        model.send(:attr_accessor, :file_ids)
+        model.asset :file, multiple: true
+      end
+
+      it "calls find for each of the file_ids and returns result" do
+        instance.file_ids = [1, 2, 3]
+        expect(Tessa::Asset).to receive(:find).with([1, 2, 3]).and_return([:a1, :a2, :a3])
+        expect(getter).to eq([:a1, :a2, :a3])
+      end
+
+      it "caches the result" do
+        expect(Tessa::Asset).to receive(:find).and_return(:val).once
+        instance.file
+        instance.file
+      end
+    end
+
+    context "with a singular typed field" do
+      before do
+        model.send(:attr_accessor, :file_id)
+        model.asset :file
+      end
+
+      it "calls find for file_id and returns result" do
+        instance.file_id = 1
+        expect(Tessa::Asset).to receive(:find).with(1).and_return(:a1)
+        expect(getter).to eq(:a1)
+      end
+
+      it "caches the result" do
+        expect(Tessa::Asset).to receive(:find).and_return(:val).once
+        instance.file
+        instance.file
+      end
+    end
+  end
 end
