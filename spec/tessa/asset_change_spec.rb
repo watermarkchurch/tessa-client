@@ -55,4 +55,32 @@ RSpec.describe Tessa::AssetChange do
       end
     end
   end
+
+  describe "#add?" do
+    subject(:add?) { change.add? }
+
+    context "action = 'add'" do
+      before { change.action = 'add' }
+      it { is_expected.to eq(true) }
+    end
+
+    context "action != 'add'" do
+      before { change.action = 'something' }
+      it { is_expected.to eq(false) }
+    end
+  end
+
+  describe "#remove?" do
+    subject(:remove?) { change.remove? }
+
+    context "action = 'remove'" do
+      before { change.action = 'remove' }
+      it { is_expected.to eq(true) }
+    end
+
+    context "action != 'remove'" do
+      before { change.action = 'something' }
+      it { is_expected.to eq(false) }
+    end
+  end
 end

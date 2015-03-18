@@ -24,6 +24,14 @@ module Tessa
       end
     end
 
+    def add?
+      action == 'add'
+    end
+
+    def remove?
+      action == 'remove'
+    end
+
     private
 
     def asset
