@@ -42,12 +42,7 @@ module Tessa
       end
     end
 
-    def removal_change_set_for(value, on:)
-      if !(multiple? && value.is_a?(AssetChangeSet))
-      end
-    end
-
-    def intersection_change_set(ids, on:)
+    def difference_change_set(ids, on:)
       AssetChangeSet.new.tap do |change_set|
         ([*on.public_send(id_field)] - ids).each do |id|
           change_set.remove(id)

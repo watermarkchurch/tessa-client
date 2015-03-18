@@ -26,7 +26,7 @@ module Tessa
 
           if !(field.multiple? && value.is_a?(AssetChangeSet))
             new_ids = change_set.scoped_changes.select(&:add?).map(&:id)
-            change_set += field.intersection_change_set(new_ids, on: self)
+            change_set += field.difference_change_set(new_ids, on: self)
           end
 
           pending_tessa_change_sets[name] += change_set
