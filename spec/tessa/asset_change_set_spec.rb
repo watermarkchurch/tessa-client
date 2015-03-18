@@ -57,12 +57,6 @@ RSpec.describe Tessa::AssetChangeSet do
         expect(set.scoped_changes.size).to eq(2)
         expect(set.scoped_changes.map(&:id)).to eq([1, 2])
       end
-
-      it "will return scoped plus additional ids passed in :additional_scoped_ids" do
-        scoped_changes = set.scoped_changes(additional_scoped_ids: [3])
-        expect(scoped_changes.size).to eq(3)
-        expect(scoped_changes.map(&:id)).to eq([1, 2, 3])
-      end
     end
   end
 
@@ -80,12 +74,6 @@ RSpec.describe Tessa::AssetChangeSet do
       expect(set.changes[0]).to receive(:apply)
       expect(set.changes[1]).not_to receive(:apply)
       set.apply
-    end
-
-    it "calls apply on scoped plus additional ids from :additional_scoped_ids" do
-      expect(set.changes[0]).to receive(:apply)
-      expect(set.changes[1]).to receive(:apply)
-      set.apply(additional_scoped_ids: [2])
     end
   end
 

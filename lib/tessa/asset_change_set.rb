@@ -9,13 +9,12 @@ module Tessa
       super new_ids.compact
     end
 
-    def scoped_changes(additional_scoped_ids: [])
-      changes.select { |change|
-        (scoped_ids + additional_scoped_ids).include?(change.id) }
+    def scoped_changes
+      changes.select { |change| scoped_ids.include?(change.id) }
     end
 
-    def apply(**options)
-      scoped_changes(**options).each(&:apply)
+    def apply
+      scoped_changes.each(&:apply)
     end
 
     def +(b)
