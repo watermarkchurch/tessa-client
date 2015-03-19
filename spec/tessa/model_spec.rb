@@ -281,4 +281,46 @@ RSpec.describe Tessa::Model do
       end
     end
   end
+
+  describe "#apply_tessa_change_sets" do
+    let(:instance) { model.new }
+    let(:sets) { Array.new(2) { instance_spy(Tessa::AssetChangeSet) } }
+
+    before do
+      model.asset :field1
+      model.asset :field2
+      instance.instance_variable_set(
+        :@pending_tessa_change_sets,
+        {
+          field1: sets[0],
+          field2: sets[1],
+        }
+      )
+      instance.apply_tessa_change_sets
+    end
+
+    it "iterates over all pending changesets calling apply" do
+      expect(sets[0]).to have_received(:apply)
+      expect(sets[1]).to have_received(:apply)
+    end
+
+    it "removes all changesets from list" do
+      expect(instance.pending_tessa_change_sets).to be_empty
+    end
+  end
+
+  describe "#remove_all_tessa_assets" do
+    it "adds pending change sets for each field removing all current assets"
+  end
+
+  describe "adds callbacks" do
+    context "model responds to after_commit" do
+      it "calls it with :apply_tessa_change_sets"
+    end
+
+    context "model responds to before_destroy" do
+      it "calls it with :remove_all_tessa_assets"
+    end
+  end
+
 end
