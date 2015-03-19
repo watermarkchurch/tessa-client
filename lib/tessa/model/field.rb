@@ -12,6 +12,14 @@ module Tessa
         super || "#{name}#{default_id_field_suffix}"
       end
 
+      def ids(on:)
+        [*id(on: on)]
+      end
+
+      def id(on:)
+        on.public_send(id_field)
+      end
+
       def apply(set, on:)
         ids = [*on.public_send(id_field)]
 

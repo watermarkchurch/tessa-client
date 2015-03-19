@@ -310,7 +310,27 @@ RSpec.describe Tessa::Model do
   end
 
   describe "#remove_all_tessa_assets" do
-    it "adds pending change sets for each field removing all current assets"
+    let(:instance) { model.new }
+    before do
+      model.send :attr_accessor, :field1_id, :field2_ids
+      model.asset :field1
+      model.asset :field2, multiple: true
+      instance.field1_id = 1
+      instance.field2_ids = [2, 3]
+    end
+
+    it "adds pending change sets for each field removing all current assets" do
+      instance.remove_all_tessa_assets
+      changes = instance.pending_tessa_change_sets.values
+        .reduce(Tessa::AssetChangeSet.new, :+)
+        .changes
+        .map { |change| [change.id, change.action.to_sym] }
+        expect(changes).to eq([
+          [1, :remove],
+          [2, :remove],
+          [3, :remove],
+        ])
+    end
   end
 
   describe "adds callbacks" do

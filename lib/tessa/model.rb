@@ -22,6 +22,16 @@ module Tessa
         end
       end
 
+      def remove_all_tessa_assets
+        self.class.tessa_fields.each do |name, field|
+          change_set = pending_tessa_change_sets[name]
+          field.ids(on: self).each do |asset_id|
+            change_set.remove(asset_id)
+          end
+          pending_tessa_change_sets[name] = change_set
+        end
+      end
+
     end
 
     module ClassMethods
