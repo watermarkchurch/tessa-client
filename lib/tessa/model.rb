@@ -45,7 +45,7 @@ module Tessa
           else
             instance_variable_set(
               ivar,
-              Tessa::Asset.find(public_send(field.id_field))
+              Tessa::Asset.find(field.id(on: self))
             )
           end
         end

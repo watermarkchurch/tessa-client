@@ -21,7 +21,7 @@ module Tessa
       end
 
       def apply(set, on:)
-        ids = [*on.public_send(id_field)]
+        ids = ids(on: on)
 
         set.scoped_changes.each do |change|
           if change.add?
@@ -51,9 +51,9 @@ module Tessa
         end
       end
 
-      def difference_change_set(ids, on:)
+      def difference_change_set(subtrahend_ids, on:)
         AssetChangeSet.new.tap do |change_set|
-          ([*on.public_send(id_field)] - ids).each do |id|
+          (ids(on: on) - subtrahend_ids).each do |id|
             change_set.remove(id)
           end
         end
