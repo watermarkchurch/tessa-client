@@ -315,11 +315,31 @@ RSpec.describe Tessa::Model do
 
   describe "adds callbacks" do
     context "model responds to after_commit" do
-      it "calls it with :apply_tessa_change_sets"
+      let(:model) {
+        Class.new do
+          def self.after_commit(arg=nil)
+            @after_commit ||= arg
+          end
+        end.tap { |c| c.send(:include, described_module) }
+      }
+
+      it "calls it with :apply_tessa_change_sets" do
+        expect(model.after_commit).to eq(:apply_tessa_change_sets)
+      end
     end
 
     context "model responds to before_destroy" do
-      it "calls it with :remove_all_tessa_assets"
+      let(:model) {
+        Class.new do
+          def self.before_destroy(arg=nil)
+            @before_destroy ||= arg
+          end
+        end.tap { |c| c.send(:include, described_module) }
+      }
+
+      it "calls it with :remove_all_tessa_assets" do
+        expect(model.before_destroy).to eq(:remove_all_tessa_assets)
+      end
     end
   end
 
