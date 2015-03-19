@@ -9,13 +9,41 @@ module Tessa
       super new_ids.compact
     end
 
-    def scoped_changes(additional_scoped_ids: [])
-      changes.select { |change|
-        (scoped_ids + additional_scoped_ids).include?(change.id) }
+    def scoped_changes
+      changes.select { |change| scoped_ids.include?(change.id) }
     end
 
-    def apply(**options)
-      scoped_changes(**options).each(&:apply)
+    def apply
+      scoped_changes.uniq.each(&:apply)
+    end
+
+    def +(b)
+      self.changes = (self.changes + b.changes).uniq
+      self.scoped_ids = (self.scoped_ids + b.scoped_ids).uniq
+      self
+    end
+
+    def add(value)
+      id = id_from_asset(value)
+      changes << AssetChange.new(id: id, action: "add")
+      scoped_ids << id
+    end
+
+    def remove(value)
+      id = id_from_asset(value)
+      changes << AssetChange.new(id: id, action: "remove")
+      scoped_ids << id
+    end
+
+    private
+
+    def id_from_asset(value)
+      case value
+      when Asset
+        value.id
+      when Fixnum
+        value
+      end
     end
   end
 end

@@ -16,12 +16,28 @@ module Tessa
     end
 
     def apply
-      case action
-      when "add"
+      if add?
         asset.complete!
-      when "remove"
+      elsif remove?
         asset.delete!
       end
+    end
+
+    def hash
+      [id, action].hash
+    end
+
+    def eql?(b)
+      self.class == b.class &&
+        self.hash == b.hash
+    end
+
+    def add?
+      action == 'add'
+    end
+
+    def remove?
+      action == 'remove'
     end
 
     private
