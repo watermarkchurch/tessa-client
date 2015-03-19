@@ -61,19 +61,39 @@ RSpec.describe Tessa::AssetChangeSet do
   end
 
   describe "#apply" do
-    let(:args) {
-      {
-        changes: [
-          Tessa::AssetChange.new(id: 1),
-          Tessa::AssetChange.new(id: 2)],
-        scoped_ids: [1],
-      }
-    }
 
-    it "calls apply on each scoped change" do
-      expect(set.changes[0]).to receive(:apply)
-      expect(set.changes[1]).not_to receive(:apply)
-      set.apply
+    context "with unscoped changes" do
+      let(:args) {
+        {
+          changes: [
+            Tessa::AssetChange.new(id: 1),
+            Tessa::AssetChange.new(id: 2)],
+          scoped_ids: [1],
+        }
+      }
+
+      it "calls apply on each scoped change" do
+        expect(set.changes[0]).to receive(:apply)
+        expect(set.changes[1]).not_to receive(:apply)
+        set.apply
+      end
+    end
+
+    context "with duplicate changes" do
+      let(:args) {
+        {
+          changes: [
+            Tessa::AssetChange.new(id: 1, action: 'remove'),
+            Tessa::AssetChange.new(id: 1, action: 'remove')],
+          scoped_ids: [1],
+        }
+      }
+
+      it "only calls apply on unique elements" do
+        expect(set.changes[0]).to receive(:apply)
+        expect(set.changes[1]).not_to receive(:apply)
+        set.apply
+      end
     end
   end
 

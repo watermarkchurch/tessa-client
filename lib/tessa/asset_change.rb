@@ -23,6 +23,15 @@ module Tessa
       end
     end
 
+    def hash
+      [id, action].hash
+    end
+
+    def eql?(b)
+      self.class == b.class &&
+        self.hash == b.hash
+    end
+
     def add?
       action == 'add'
     end

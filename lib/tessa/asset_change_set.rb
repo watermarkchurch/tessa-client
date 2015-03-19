@@ -14,7 +14,7 @@ module Tessa
     end
 
     def apply
-      scoped_changes.each(&:apply)
+      scoped_changes.uniq.each(&:apply)
     end
 
     def +(b)
