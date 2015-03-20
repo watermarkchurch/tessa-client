@@ -11,6 +11,7 @@ require "tessa/asset"
 require "tessa/asset_change"
 require "tessa/asset_change_set"
 require "tessa/model"
+require "tessa/rack_upload_proxy"
 require "tessa/upload"
 
 
