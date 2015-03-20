@@ -256,9 +256,18 @@ RSpec.describe Tessa::Model do
       end
 
       it "caches the result" do
+        instance.file_ids = [1]
         expect(Tessa::Asset).to receive(:find).and_return(:val).once
         instance.file
         instance.file
+      end
+
+      context "with no values" do
+        it "does not call find" do
+          instance.file_ids = []
+          expect(Tessa::Asset).not_to receive(:find)
+          expect(instance.file).to eq([])
+        end
       end
     end
 
@@ -275,9 +284,18 @@ RSpec.describe Tessa::Model do
       end
 
       it "caches the result" do
+        instance.file_id = 1
         expect(Tessa::Asset).to receive(:find).and_return(:val).once
         instance.file
         instance.file
+      end
+
+      context "with nil value" do
+        it "does not call find" do
+          instance.file_id = nil
+          expect(Tessa::Asset).not_to receive(:find)
+          expect(instance.file).to be_nil
+        end
       end
     end
   end

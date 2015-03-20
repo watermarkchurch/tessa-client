@@ -32,6 +32,14 @@ module Tessa
         end
       end
 
+      def fetch_tessa_remote_assets(ids)
+        if [*ids].empty?
+          [] if ids.is_a?(Array)
+        else
+          Tessa::Asset.find(ids)
+        end
+      end
+
     end
 
     module ClassMethods
@@ -45,7 +53,7 @@ module Tessa
           else
             instance_variable_set(
               ivar,
-              Tessa::Asset.find(field.id(on: self))
+              fetch_tessa_remote_assets(field.id(on: self))
             )
           end
         end
