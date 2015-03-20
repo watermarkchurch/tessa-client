@@ -11,7 +11,7 @@ module Tessa
 
     def connection
       @connection ||= Faraday.new(url: url) do |conn|
-        conn.request :digest, username, password
+        conn.basic_auth username, password
         conn.request :url_encoded
         conn.adapter Faraday.default_adapter
       end

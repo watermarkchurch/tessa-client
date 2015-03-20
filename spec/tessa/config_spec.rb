@@ -95,8 +95,8 @@ RSpec.describe Tessa::Config do
           connection
         end
 
-        it "sets up digest auth params" do
-          expect(spy).to have_received(:request).with(:digest, args[:username], args[:password])
+        it "sets up basic auth params" do
+          expect(spy).to have_received(:basic_auth).with(args[:username], args[:password])
         end
 
         it "sets up url_encoded request handler" do

@@ -1,7 +1,6 @@
 require "tessa/version"
 
 require "faraday"
-require "faraday/digestauth"
 require "virtus"
 require "json"
 

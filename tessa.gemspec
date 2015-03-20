@@ -19,7 +19,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "faraday", "~>0.9.1"
-  spec.add_dependency "faraday-digestauth", "~>0.2.0"
   spec.add_dependency "virtus", "~>1.0.4"
 
   spec.add_development_dependency "bundler", "~> 1.7"
