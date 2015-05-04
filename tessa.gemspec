@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["jpowell@watermark.org", "tpetticrew@watermark.org"]
   spec.summary       = %q{Manage your assets.}
   spec.description   = %q{Manage your assets.}
-  spec.homepage      = "https://github.com/watermarkchurch/tessa"
+  spec.homepage      = "https://github.com/watermarkchurch/tessa-client"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
