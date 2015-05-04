@@ -1,8 +1,11 @@
 require 'tessa'
+require "codeclimate-test-reporter"
 
 Dir[File.expand_path("../support/*.rb", __FILE__)].each do |file|
   require file
 end
+
+CodeClimate::TestReporter.start
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
