@@ -90,8 +90,8 @@ RSpec.describe Tessa::AssetChangeSet do
       }
 
       it "only calls apply on unique elements" do
-        expect(set.changes[0]).to receive(:apply)
-        expect(set.changes[1]).not_to receive(:apply)
+        expect(el = set.changes.uniq.first).to receive(:apply)
+        (set.changes - [el]).each { |o| expect(el).to_not receive(:apply) }
         set.apply
       end
     end
