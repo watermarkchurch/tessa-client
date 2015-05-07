@@ -327,6 +327,30 @@ RSpec.describe Tessa::Model do
     end
   end
 
+  describe "#fetch_tessa_remote_assets" do
+    subject(:instance) { model.new }
+
+    before do
+      model.asset :avatar
+    end
+
+    it "returns nil when nil is passed" do
+      expect(instance.fetch_tessa_remote_assets(nil)).to be_nil
+    end
+
+    it "returns [] when [] is passed" do
+      expect(instance.fetch_tessa_remote_assets([])).to eq([])
+    end
+
+    context "when argument is not blank" do
+      it "calls Tessa::Asset.find with arguments" do
+        arg = 1234
+        expect(Tessa::Asset).to receive(:find).with(arg)
+        instance.fetch_tessa_remote_assets(arg)
+      end
+    end
+  end
+
   describe "#remove_all_tessa_assets" do
     let(:instance) { model.new }
     before do
