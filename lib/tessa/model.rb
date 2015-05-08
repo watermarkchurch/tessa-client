@@ -38,6 +38,12 @@ module Tessa
         else
           Tessa::Asset.find(ids)
         end
+      rescue Tessa::RequestFailed => err
+        if ids.is_a?(Array)
+          ids.map { |id| Tessa::FailedAsset.new(id: id, error: err) }
+        else
+          Tessa::FailedAsset.new(id: ids, error: err)
+        end
       end
 
     end
