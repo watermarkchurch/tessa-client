@@ -65,7 +65,7 @@ RSpec.describe Tessa::Asset do
     include_examples "remote call macro", :delete, "/assets/123", Tessa::Asset
   end
 
-  describe "#find" do
+  describe ".find" do
     let(:faraday_stubs) {
       Faraday::Adapter::Test::Stubs.new do |stub|
         stub.get("/assets/#{id_query}") { |env| [200, {}, remote_response.to_json] }
