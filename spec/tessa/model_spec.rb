@@ -361,7 +361,9 @@ RSpec.describe Tessa::Model do
       end
 
       context "when Tessa::Asset.find raises RequestFailed exception" do
-        let(:error) { Tessa::RequestFailed.new("test exception") }
+        let(:error) {
+          Tessa::RequestFailed.new("test exception", double(status: '500'))
+        }
 
         before do
           allow(Tessa::Asset).to receive(:find).and_raise(error)
@@ -370,13 +372,12 @@ RSpec.describe Tessa::Model do
         context "argument is single id" do
           let(:arg) { id }
 
-          it "returns FailedAsset" do
-            expect(result).to be_a(Tessa::FailedAsset)
+          it "returns Failure" do
+            expect(result).to be_a(Tessa::Failure)
           end
 
           it "returns asset with proper data" do
             expect(result.id).to eq(arg)
-            expect(result.error).to eq(error)
           end
         end
 
@@ -387,14 +388,13 @@ RSpec.describe Tessa::Model do
             expect(result).to be_a(Array)
           end
 
-          it "returns instances of FailedAsset" do
-            expect(result).to all( be_a(Tessa::FailedAsset) )
+          it "returns instances of Failure" do
+            expect(result).to all( be_a(Tessa::Failure) )
           end
 
           it "returns array with an asset for each id passed" do
             arg.zip(result) do |a, r|
               expect(r.id).to eq(a)
-              expect(r.error).to eq(error)
             end
           end
         end
