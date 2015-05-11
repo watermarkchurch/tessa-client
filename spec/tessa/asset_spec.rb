@@ -65,6 +65,12 @@ RSpec.describe Tessa::Asset do
     include_examples "remote call macro", :delete, "/assets/123", Tessa::Asset
   end
 
+  describe "#failure?" do
+    it "returns false" do
+      expect(asset.failure?).to be(false)
+    end
+  end
+
   describe ".find" do
     let(:faraday_stubs) {
       Faraday::Adapter::Test::Stubs.new do |stub|
