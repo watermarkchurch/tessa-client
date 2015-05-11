@@ -15,7 +15,6 @@ require "tessa/rack_upload_proxy"
 require "tessa/upload"
 require "tessa/view_helpers"
 
-
 module Tessa
   def self.config
     @config ||= Config.new
