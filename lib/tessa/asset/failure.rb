@@ -17,7 +17,7 @@ class Tessa::Asset::Failure < SimpleDelegator
     when /5\d{2}/
       "The service is unavailable at this time."
     when /4\d{2}/
-      "There was a problem retrieving the data for that asset."
+      "There was a problem retrieving the data for this asset."
     else
       "An error occurred."
     end

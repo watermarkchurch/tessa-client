@@ -2,7 +2,7 @@ module Tessa
   module ViewHelpers
     def tessa_image_tag(asset)
       if asset.failure?
-        content_tag(:div, "Image not available", class: "tessa-asset-failure")
+        content_tag(:div, asset.message, class: "tessa-asset-failure")
       else
         image_tag(asset.private_url)
       end
