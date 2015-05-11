@@ -28,5 +28,13 @@ module Tessa
     def failure?
       true
     end
+
+    def meta
+      {
+        name: "Not Found",
+        size: "0",
+        mime_type: "application/octet-stream"
+      }
+    end
   end
 end
