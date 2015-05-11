@@ -5,8 +5,17 @@ module Tessa
 
     attr_reader :message
 
-    def self.factory(id:, error:)
-      message = case error.response.status
+    def initialize(id:, message:)
+      @message = message
+      super(Asset.new(id: id))
+    end
+
+    def self.factory(id:, response:)
+      new(id: id, message: message_from_status(response.status))
+    end
+
+    def self.message_from_status(status)
+      case status
       when /5\d{2}/
         "The service is unavailable at this time."
       when /4\d{2}/
@@ -14,13 +23,6 @@ module Tessa
       else
         "An error occurred."
       end
-
-      new(id, message)
-    end
-
-    def initialize(id, message)
-      @message = message
-      super(Asset.new(id: id))
     end
 
     def failure?
