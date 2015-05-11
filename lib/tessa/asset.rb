@@ -33,3 +33,5 @@ module Tessa
     end
   end
 end
+
+require 'tessa/asset/failure'

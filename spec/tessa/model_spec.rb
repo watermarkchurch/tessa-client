@@ -373,7 +373,7 @@ RSpec.describe Tessa::Model do
           let(:arg) { id }
 
           it "returns Failure" do
-            expect(result).to be_a(Tessa::Failure)
+            expect(result).to be_a(Tessa::Asset::Failure)
           end
 
           it "returns asset with proper data" do
@@ -389,7 +389,7 @@ RSpec.describe Tessa::Model do
           end
 
           it "returns instances of Failure" do
-            expect(result).to all( be_a(Tessa::Failure) )
+            expect(result).to all( be_a(Tessa::Asset::Failure) )
           end
 
           it "returns array with an asset for each id passed" do

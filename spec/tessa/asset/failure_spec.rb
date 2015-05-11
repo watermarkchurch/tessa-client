@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Tessa::Failure do
+RSpec.describe Tessa::Asset::Failure do
   subject(:failure) { described_class.new(args) }
   let(:id) { rand(100) }
   let(:args) {
@@ -21,7 +21,6 @@ RSpec.describe Tessa::Failure do
     asset = Tessa::Asset.new
     expect(failure.status).to eq(asset.status)
     expect(failure.strategy).to eq(asset.strategy)
-    expect(failure.meta).to eq(asset.meta)
     expect(failure.public_url).to eq(asset.public_url)
     expect(failure.private_url).to eq(asset.private_url)
     expect(failure.delete_url).to eq(asset.delete_url)

@@ -40,9 +40,11 @@ module Tessa
         end
       rescue Tessa::RequestFailed => err
         if ids.is_a?(Array)
-          ids.map { |id| Tessa::Failure.factory(id: id, response: err.response) }
+          ids.map do |id|
+            Tessa::Asset::Failure.factory(id: id, response: err.response)
+          end
         else
-          Tessa::Failure.factory(id: ids, response: err.response)
+          Tessa::Asset::Failure.factory(id: ids, response: err.response)
         end
       end
 
