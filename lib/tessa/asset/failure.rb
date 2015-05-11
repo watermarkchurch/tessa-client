@@ -1,7 +1,6 @@
 require 'delegate'
 
 class Tessa::Asset::Failure < SimpleDelegator
-
   attr_reader :message
 
   def initialize(id:, message:)
