@@ -13,7 +13,7 @@ require "tessa/controller_helpers"
 require "tessa/model"
 require "tessa/rack_upload_proxy"
 require "tessa/upload"
-
+require "tessa/view_helpers"
 
 module Tessa
   def self.config

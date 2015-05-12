@@ -327,6 +327,81 @@ RSpec.describe Tessa::Model do
     end
   end
 
+  describe "#fetch_tessa_remote_assets" do
+    subject(:result) { model.new.fetch_tessa_remote_assets(arg) }
+
+    before do
+      model.asset :avatar
+    end
+
+    context "argument is `nil`" do
+      let(:arg) { nil }
+
+      it "returns nil" do
+        expect(result).to be_nil
+      end
+    end
+
+    context "argument is `[]`" do
+      let(:arg) { [] }
+
+      it "returns []" do
+        expect(result).to be_a(Array)
+        expect(result).to be_empty
+      end
+    end
+
+    context "when argument is not blank" do
+      let(:id) { rand(100) }
+      let(:arg) { id }
+
+      it "calls Tessa::Asset.find with arguments" do
+        expect(Tessa::Asset).to receive(:find).with(arg)
+        result
+      end
+
+      context "when Tessa::Asset.find raises RequestFailed exception" do
+        let(:error) {
+          Tessa::RequestFailed.new("test exception", double(status: '500'))
+        }
+
+        before do
+          allow(Tessa::Asset).to receive(:find).and_raise(error)
+        end
+
+        context "argument is single id" do
+          let(:arg) { id }
+
+          it "returns Failure" do
+            expect(result).to be_a(Tessa::Asset::Failure)
+          end
+
+          it "returns asset with proper data" do
+            expect(result.id).to eq(arg)
+          end
+        end
+
+        context "argument is array" do
+          let(:arg) { [ id, id * 2 ] }
+
+          it "returns array" do
+            expect(result).to be_a(Array)
+          end
+
+          it "returns instances of Failure" do
+            expect(result).to all( be_a(Tessa::Asset::Failure) )
+          end
+
+          it "returns array with an asset for each id passed" do
+            arg.zip(result) do |a, r|
+              expect(r.id).to eq(a)
+            end
+          end
+        end
+      end
+    end
+  end
+
   describe "#remove_all_tessa_assets" do
     let(:instance) { model.new }
     before do

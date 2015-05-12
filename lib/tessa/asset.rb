@@ -27,5 +27,11 @@ module Tessa
                   connection: Tessa.config.connection)
       new_from_response connection.get("/assets/#{ids.join(",")}")
     end
+
+    def failure?
+      false
+    end
   end
 end
+
+require 'tessa/asset/failure'

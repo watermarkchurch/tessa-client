@@ -38,6 +38,14 @@ module Tessa
         else
           Tessa::Asset.find(ids)
         end
+      rescue Tessa::RequestFailed => err
+        if ids.is_a?(Array)
+          ids.map do |id|
+            Tessa::Asset::Failure.factory(id: id, response: err.response)
+          end
+        else
+          Tessa::Asset::Failure.factory(id: ids, response: err.response)
+        end
       end
 
     end
