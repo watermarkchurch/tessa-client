@@ -13,7 +13,7 @@ class Tessa::Asset::Failure < SimpleDelegator
   end
 
   def self.message_from_status(status)
-    case status
+    case status.to_s
     when /5\d{2}/
       "The service is unavailable at this time."
     when /4\d{2}/
