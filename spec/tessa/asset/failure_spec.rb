@@ -17,6 +17,20 @@ RSpec.describe Tessa::Asset::Failure do
     end
   end
 
+  describe ".factory" do
+    let(:message) { 'test message' }
+    let(:response) { double(status: 500) }
+    subject(:failure) { described_class.factory(id: id, response: response) }
+
+
+    it "returns instance of Failure" do
+      expect(described_class).to receive(:message_from_status)
+        .with(response.status).and_return(message)
+      expect(failure.id).to eq(id)
+      expect(failure.message).to eq(message)
+    end
+  end
+
   it "responds like a blank asset" do
     asset = Tessa::Asset.new
     expect(failure.status).to eq(asset.status)
