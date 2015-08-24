@@ -15,6 +15,7 @@ RSpec.describe Tessa::Model do
     context "with a field named :avatar" do
       subject(:instance) { model.new }
       before do
+        model.send :attr_accessor, :avatar_id
         model.asset :avatar
       end
 
@@ -24,6 +25,18 @@ RSpec.describe Tessa::Model do
 
       it "creates an #avatar= method" do
         expect(instance).to respond_to(:avatar=)
+      end
+
+      it "allows overriding and calling super" do
+        model.class_eval do
+          def avatar
+            @override_test = true
+            super
+          end
+        end
+
+        instance.avatar
+        expect(instance.instance_variable_get(:@override_test)).to eq(true)
       end
     end
 

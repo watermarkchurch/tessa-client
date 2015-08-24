@@ -55,7 +55,9 @@ module Tessa
       def asset(name, args={})
         field = tessa_fields[name] = Field.new(args.merge(name: name))
 
-        define_method(name) do
+        dynamic_extensions = Module.new
+
+        dynamic_extensions.send(:define_method, name) do
           if instance_variable_defined?(ivar = "@#{name}")
             instance_variable_get(ivar)
           else
@@ -66,7 +68,7 @@ module Tessa
           end
         end
 
-        define_method("#{name}=") do |value|
+        dynamic_extensions.send(:define_method, "#{name}=") do |value|
           change_set = field.change_set_for(value)
 
           if !(field.multiple? && value.is_a?(AssetChangeSet))
@@ -78,6 +80,8 @@ module Tessa
 
           field.apply(change_set, on: self)
         end
+
+        include dynamic_extensions
       end
 
       def tessa_fields
