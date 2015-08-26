@@ -86,6 +86,7 @@ RSpec.describe Tessa::RackUploadProxy do
       {
         "name" => "my-name",
         "size" => 456,
+        "date" => "2020-01-01",
         "mime_type" => "plain/text",
       }
     }
@@ -100,12 +101,26 @@ RSpec.describe Tessa::RackUploadProxy do
       result
     end
 
+    it "calls Tessa::Upload.create with 'date'" do
+      expect(Tessa::Upload).to receive(:create).with(hash_including(date: "2020-01-01"))
+      result
+    end
+
     it "calls Tessa::Upload.create with 'mime_type'" do
       expect(Tessa::Upload).to receive(:create).with(hash_including(mime_type: "plain/text"))
       result
     end
 
     it_behaves_like "proper json return"
+  end
+
+  context "with no date param" do
+    let(:params) { {} }
+
+    it "calls Tessa::Upload.create without 'date'" do
+      expect(Tessa::Upload).to_not receive(:create).with(hash_including(:date))
+      result
+    end
   end
 
   context "with existing session" do

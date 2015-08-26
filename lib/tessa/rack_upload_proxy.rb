@@ -3,11 +3,12 @@ module Tessa
 
     def call(env)
       params = env['rack.request.form_hash']
-      upload = Tessa::Upload.create(
+      upload = Tessa::Upload.create({
         name: params["name"],
         size: params["size"],
+        date: params["date"],
         mime_type: params["mime_type"],
-      )
+      }.reject { |k, v| v.nil? })
 
       env['rack.session'][:tessa_upload_asset_ids] ||= []
       env['rack.session'][:tessa_upload_asset_ids] << upload.asset_id
