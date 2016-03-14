@@ -327,16 +327,30 @@ RSpec.describe Tessa::Model do
           field2: sets[1],
         }
       )
-      instance.apply_tessa_change_sets
     end
 
     it "iterates over all pending changesets calling apply" do
+      instance.apply_tessa_change_sets
       expect(sets[0]).to have_received(:apply)
       expect(sets[1]).to have_received(:apply)
     end
 
     it "removes all changesets from list" do
+      instance.apply_tessa_change_sets
       expect(instance.pending_tessa_change_sets).to be_empty
+    end
+
+    context "no @pending_tessa_change_sets ivar" do
+      before do
+        instance.instance_variable_set(
+          :@pending_tessa_change_sets,
+          nil
+        )
+      end
+
+      it "doesn't raise error" do
+        expect { instance.apply_tessa_change_sets }.to_not raise_error
+      end
     end
   end
 

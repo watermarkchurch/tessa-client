@@ -17,7 +17,7 @@ module Tessa
       end
 
       def apply_tessa_change_sets
-        @pending_tessa_change_sets.delete_if do |_, change_set|
+        pending_tessa_change_sets.delete_if do |_, change_set|
           change_set.apply
         end
       end
