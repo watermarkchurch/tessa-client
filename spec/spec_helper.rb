@@ -1,6 +1,3 @@
-require "codeclimate-test-reporter"
-CodeClimate::TestReporter.start
-
 require 'tessa'
 
 Dir[File.expand_path("../support/*.rb", __FILE__)].each do |file|

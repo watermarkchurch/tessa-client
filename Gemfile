@@ -7,7 +7,3 @@ group :development do
   gem 'pry'
   gem 'dotenv'
 end
-
-group :test do
-  gem "codeclimate-test-reporter", require: nil
-end
