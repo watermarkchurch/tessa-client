@@ -9,6 +9,7 @@ module Tessa
     attribute :meta, Hash[Symbol => String]
     attribute :public_url, String
     attribute :private_url, String
+    attribute :private_download_url, String
     attribute :delete_url, String
 
     def complete!(connection: Tessa.config.connection)

@@ -10,6 +10,7 @@ RSpec.describe Tessa::Asset do
       meta: { name: "foo" },
       public_url: "http://example.com/public",
       private_url: "http://example.com/private",
+      private_download_url: "http://example.com/private?download",
       delete_url: "http://example.com/delete",
     }
   }
@@ -38,6 +39,10 @@ RSpec.describe Tessa::Asset do
 
       it "sets private_url to attribute" do
         expect(asset.private_url).to eq(args[:private_url])
+      end
+
+      it "sets private_download_url to attribute" do
+        expect(asset.private_download_url).to eq(args[:private_download_url])
       end
 
       it "sets delete_url to attribute" do
