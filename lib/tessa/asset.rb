@@ -30,7 +30,12 @@ module Tessa
     end
 
     def self.create(file:, **options)
-      Upload.create(options).upload_file(file)
+      default_options = {
+        size: File.size(file),
+        name: File.basename(file),
+        date: File.mtime(file),
+      }
+      Upload.create(default_options.merge(options)).upload_file(file)
     end
 
     def failure?

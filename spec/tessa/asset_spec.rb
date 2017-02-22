@@ -153,18 +153,44 @@ RSpec.describe Tessa::Asset do
 
     it "requires a file param" do
       expect { described_class.create }.to raise_error(ArgumentError)
-      expect { described_class.create(file: "abc") }.to_not raise_error
+      expect { described_class.create(file: __FILE__) }.to_not raise_error
     end
 
     it "creates a new upload" do
-      expect(Tessa::Upload).to receive(:create).with(foo: :bar, baz: :boom).and_return(upload)
-      described_class.create(file: "abc", foo: :bar, baz: :boom)
+      expect(Tessa::Upload)
+        .to receive(:create).with(hash_including(foo: :bar, baz: :boom)).and_return(upload)
+      described_class.create(file: __FILE__, foo: :bar, baz: :boom)
     end
 
     it "uploads the passed file to the upload's URL" do
       expect(Tessa::Upload).to receive(:create).and_return(upload)
-      expect(upload).to receive(:upload_file).with(:file)
-      described_class.create(file: :file)
+      expect(upload).to receive(:upload_file).with(__FILE__)
+      described_class.create(file: __FILE__)
+    end
+
+    it "infers the file size, name, and date" do
+      file = Tempfile.new("test")
+      file.write "abc"
+      file.close
+      expected_values = {
+        size: 3,
+        name: File.basename(file.path),
+        date: File.mtime(file.path),
+      }
+      expect(Tessa::Upload)
+        .to receive(:create).with(hash_including(expected_values)).and_return(upload)
+      described_class.create(file: file.path)
+    end
+
+    it "allows overriding inferred values" do
+      expected_values = {
+        size: 1,
+        name: "my-file",
+        date: "123",
+      }
+      expect(Tessa::Upload)
+        .to receive(:create).with(hash_including(expected_values)).and_return(upload)
+      described_class.create(file: __FILE__, **expected_values)
     end
   end
 end
