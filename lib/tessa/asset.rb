@@ -29,6 +29,10 @@ module Tessa
       new_from_response connection.get("/assets/#{ids.join(",")}")
     end
 
+    def self.create(file:, **options)
+      Upload.create(options).upload_file(file)
+    end
+
     def failure?
       false
     end

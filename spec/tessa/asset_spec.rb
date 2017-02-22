@@ -143,4 +143,28 @@ RSpec.describe Tessa::Asset do
     end
   end
 
+  describe ".create" do
+    let(:upload) { instance_double(Tessa::Upload) }
+
+    before :each do
+      allow(Tessa::Upload).to receive(:create).and_return(upload)
+      allow(upload).to receive(:upload_file)
+    end
+
+    it "requires a file param" do
+      expect { described_class.create }.to raise_error(ArgumentError)
+      expect { described_class.create(file: "abc") }.to_not raise_error
+    end
+
+    it "creates a new upload" do
+      expect(Tessa::Upload).to receive(:create).with(foo: :bar, baz: :boom).and_return(upload)
+      described_class.create(file: "abc", foo: :bar, baz: :boom)
+    end
+
+    it "uploads the passed file to the upload's URL" do
+      expect(Tessa::Upload).to receive(:create).and_return(upload)
+      expect(upload).to receive(:upload_file).with(:file)
+      described_class.create(file: :file)
+    end
+  end
 end

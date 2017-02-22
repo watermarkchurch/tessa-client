@@ -26,7 +26,52 @@ RSpec.describe Tessa::Upload do
     end
   end
 
-  describe "::create" do
+  describe "#upload_file" do
+    subject(:upload) { described_class.new }
+    let(:task) { instance_double(described_class::UploadsFile) }
+
+    before :each do
+      allow(described_class::UploadsFile).to receive(:new).and_return(task)
+      allow(task).to receive(:call)
+      allow(Tessa::Asset).to receive(:new).and_return(instance_spy(Tessa::Asset))
+    end
+
+    it "initializes UploadsFile with self and passes argument to call" do
+      expect(task).to receive(:call).with(:file)
+      expect(described_class::UploadsFile).to receive(:new).with(upload: upload).and_return(task)
+      upload.upload_file(:file)
+    end
+
+    context "with a successful upload" do
+      before :each do
+        allow(task).to receive(:call).and_return(true)
+      end
+
+      it "updates the asset to complete state and returns asset" do
+        upload.asset_id = 123
+        asset = Tessa::Asset.new(id: 123)
+        expect(Tessa::Asset).to receive(:new).with(id: 123).and_return(asset)
+        expect(asset).to receive(:complete!).and_return(:asset)
+        expect(upload.upload_file(:file)).to eq(:asset)
+      end
+    end
+
+    context "with a failed upload" do
+      before :each do
+        allow(task).to receive(:call).and_return(false)
+      end
+
+      it "updates the asset to canceled state and returns false" do
+        upload.asset_id = 123
+        asset = Tessa::Asset.new(id: 123)
+        expect(Tessa::Asset).to receive(:new).with(id: 123).and_return(asset)
+        expect(asset).to receive(:cancel!).and_return(:asset)
+        expect(upload.upload_file(:file)).to eq(false)
+      end
+    end
+  end
+
+  describe ".create" do
     subject(:call) { described_class.create(call_args) }
 
     include_examples "remote call macro", :post, "/uploads", Tessa::Upload
