@@ -43,9 +43,11 @@ RSpec.describe Tessa::Upload::UploadsFile do
       }
 
       it "calls the upload_url with upload_method HTTP method" do
-        file = __FILE__
-        expect(connection).to receive(:post).with("http://upload/path?arg=1", hash_including(:file)).and_call_original
-        expect(task.call(file)).to be_truthy
+        file = Tempfile.new
+        file.write "hello there"
+        file.close
+        expect(connection).to receive(:post).with("http://upload/path?arg=1", "hello there").and_call_original
+        expect(task.call(file.path)).to be_truthy
       end
     end
 
@@ -59,19 +61,21 @@ RSpec.describe Tessa::Upload::UploadsFile do
       }
 
       it "calls the upload_url with upload_method HTTP method" do
-        file = __FILE__
-        expect(connection).to receive(:post).with("http://upload/path?arg=1", hash_including(:file)).and_call_original
-        expect(task.call(file)).to be_falsey
+        file = Tempfile.new
+        file.write "hello there"
+        file.close
+        expect(connection).to receive(:post).with("http://upload/path?arg=1", "hello there").and_call_original
+        expect(task.call(file.path)).to be_falsey
       end
     end
   end
 
   describe ".connection_factory" do
-    it "returns a new Faraday::Connection with the default adapter and url_encoded and multipart" do
+    it "returns a new Faraday::Connection with the default adapter" do
       obj = described_class.connection_factory
       expect(obj).to be_a(Faraday::Connection)
       expect(obj.builder.handlers)
-        .to eq([Faraday::Request::Multipart, Faraday::Request::UrlEncoded, Faraday::Adapter::NetHttp])
+        .to eq([Faraday::Adapter::NetHttp])
     end
   end
 
