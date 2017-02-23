@@ -7,16 +7,13 @@ class Tessa::Upload::UploadsFile
   end
 
   def call(file)
-    params = { file: Faraday::UploadIO.new(file, "application/octet-stream") }
     connection
-      .public_send(upload.upload_method, upload.upload_url, params)
+      .public_send(upload.upload_method, upload.upload_url, File.read(file))
       .success?
   end
 
   def self.connection_factory
     Faraday.new do |conn|
-      conn.request :multipart
-      conn.request :url_encoded
       conn.adapter Faraday.default_adapter
     end
   end
