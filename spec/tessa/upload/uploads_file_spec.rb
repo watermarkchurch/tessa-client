@@ -43,7 +43,7 @@ RSpec.describe Tessa::Upload::UploadsFile do
       }
 
       it "calls the upload_url with upload_method HTTP method" do
-        file = Tempfile.new
+        file = Tempfile.new("test")
         file.write "hello there"
         file.close
         expect(connection).to receive(:post).with("http://upload/path?arg=1", "hello there").and_call_original
@@ -61,7 +61,7 @@ RSpec.describe Tessa::Upload::UploadsFile do
       }
 
       it "calls the upload_url with upload_method HTTP method" do
-        file = Tempfile.new
+        file = Tempfile.new("test")
         file.write "hello there"
         file.close
         expect(connection).to receive(:post).with("http://upload/path?arg=1", "hello there").and_call_original
