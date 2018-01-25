@@ -40,7 +40,7 @@ TODO: Write usage instructions here
   [2]: http://rubygems.org/gems/tessa "Gem Version"
   [3]: https://img.shields.io/travis/watermarkchurch/tessa-client/master.svg?style=flat
   [4]: https://travis-ci.org/watermarkchurch/tessa-client "Build Status"
-  [5]: https://codeclimate.com/github/watermarkchurch/tessa-client/badges/coverage.svg
-  [6]: https://codeclimate.com/github/watermarkchurch/tessa-client "Coverage Status"
-  [7]: https://img.shields.io/codeclimate/github/watermarkchurch/tessa-client.svg?style=flat
-  [8]: https://codeclimate.com/github/watermarkchurch/tessa-client "Code Climate"
+  [5]: https://api.codeclimate.com/v1/badges/14600955bbe143bee625/test_coverage
+  [6]: https://codeclimate.com/github/watermarkchurch/tessa-client/test_coverage "Coverage Status"
+  [7]: https://api.codeclimate.com/v1/badges/14600955bbe143bee625/maintainability
+  [8]: https://codeclimate.com/github/watermarkchurch/tessa-client/maintainability "Code Climate"
