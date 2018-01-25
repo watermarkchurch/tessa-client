@@ -49,9 +49,12 @@ module Tessa
       end
 
       private def reapplying_asset?(field, change_set)
-        return false if change_set.changes.size > 1
-        change = change_set.changes.first
-        change&.add? && (change.id == field.id(on: self))
+        additions = change_set.changes.select(&:add?)
+
+        return false if additions.none?
+        return false if change_set.changes.size > additions.size
+
+        additions.all? { |a| field.ids(on: self).include?(a.id) }
       end
     end
 
@@ -76,12 +79,12 @@ module Tessa
           change_set = field.change_set_for(value)
 
           if !(field.multiple? && value.is_a?(AssetChangeSet))
-            new_ids = change_set.scoped_changes.select(&:add?).map(&:id)
-
-            # should effectively cause a no-op
-            if reapplying_asset?(field, change_set)
-              new_ids.push(field.id(on: self))
-            end
+            new_ids = if reapplying_asset?(field, change_set)
+                        # should effectively cause a no-op
+                        field.ids(on: self)
+                      else
+                        change_set.scoped_changes.select(&:add?).map(&:id)
+                      end
 
             change_set += field.difference_change_set(new_ids, on: self)
           end
