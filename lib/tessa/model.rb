@@ -78,14 +78,11 @@ module Tessa
         dynamic_extensions.send(:define_method, "#{name}=") do |value|
           change_set = field.change_set_for(value)
 
-          if !(field.multiple? && value.is_a?(AssetChangeSet))
-            new_ids = if reapplying_asset?(field, change_set)
-                        # should effectively cause a no-op
-                        field.ids(on: self)
-                      else
-                        change_set.scoped_changes.select(&:add?).map(&:id)
-                      end
+          # should effectively cause a no-op
+          return if reapplying_asset?(field, change_set)
 
+          if !(field.multiple? && value.is_a?(AssetChangeSet))
+            new_ids = change_set.scoped_changes.select(&:add?).map(&:id)
             change_set += field.difference_change_set(new_ids, on: self)
           end
 
