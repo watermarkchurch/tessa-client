@@ -241,7 +241,7 @@ RSpec.describe Tessa::Model do
           expect(new_set.scoped_ids).to eq(set.scoped_ids)
         end
 
-        it 'does not remove value when set to existing value and no scoped_ids' do
+        it 'keeps asset when set to existing value' do
           change_set = Tessa::AssetChangeSet.new(
             changes: { '999' => { 'action' => 'add' } },
             scoped_ids: [999]
@@ -249,9 +249,10 @@ RSpec.describe Tessa::Model do
           instance.file = change_set
           expect(instance.file_id).to eq(999)
 
-          change_set.scoped_ids = [4,5,6]
+          change_set.scoped_ids = [4, 5, 6]
           instance.file = change_set
-          expect(change_set.changes.select(&:remove?).map(&:id)).to_not include(999)
+          removals = change_set.changes.select(&:remove?).map(&:id)
+          expect(removals).to_not include(999)
           expect(instance.file_id).to eq(999)
 
           instance.file = change_set
