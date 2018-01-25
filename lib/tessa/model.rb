@@ -48,10 +48,14 @@ module Tessa
         end
       end
 
+      private def reapplying_asset?(field, change_set)
+        return false if change_set.changes.size > 1
+        change = change_set.changes.first
+        change&.add? && (change.id == field.id(on: self))
+      end
     end
 
     module ClassMethods
-
       def asset(name, args={})
         field = tessa_fields[name] = Field.new(args.merge(name: name))
 
@@ -73,6 +77,12 @@ module Tessa
 
           if !(field.multiple? && value.is_a?(AssetChangeSet))
             new_ids = change_set.scoped_changes.select(&:add?).map(&:id)
+
+            # should effectively cause a no-op
+            if reapplying_asset?(field, change_set)
+              new_ids.push(field.id(on: self))
+            end
+
             change_set += field.difference_change_set(new_ids, on: self)
           end
 
@@ -91,8 +101,6 @@ module Tessa
       def inherited(subclass)
         subclass.instance_variable_set(:@tessa_fields, @tessa_fields.dup)
       end
-
     end
-
   end
 end
