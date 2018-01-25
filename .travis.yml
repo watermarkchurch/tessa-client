@@ -3,7 +3,7 @@ language: ruby
 notifications:
   email: false
 rvm:
-  - 2.1.0
+  - 2.3.3
 addons:
   code_climate:
     repo_token: a1d1020f21ac7490fa6c577e7718c505a0bc7f13a5e4537ec7ca9f1a594bad07
