@@ -1,8 +1,10 @@
-require 'spec_helper'
+require 'rails_helper'
 
 RSpec.describe Tessa::Model do
   subject(:described_module) { described_class }
-  let(:model) { Class.new.tap { |c| c.send(:include, described_module) } }
+  let(:model) {
+    SingleAssetModel
+  }
 
   it { is_expected.to be_a(Module) }
 
