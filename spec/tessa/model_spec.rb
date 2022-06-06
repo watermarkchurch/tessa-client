@@ -6,6 +6,11 @@ RSpec.describe Tessa::Model do
     SingleAssetModel
   }
 
+  after do
+    Object.send(:remove_const, :SingleAssetModel)
+    load 'spec/dummy/app/models/single_asset_model.rb'
+  end
+
   it { is_expected.to be_a(Module) }
 
   describe "::asset" do
@@ -64,11 +69,11 @@ RSpec.describe Tessa::Model do
       end
 
       it "submodel has its own list of fields" do
-        expect(submodel.tessa_fields.keys).to eq([:field1, :field2])
+        expect(submodel.tessa_fields.keys).to eq([:map, :field1, :field2])
       end
 
       it "does not alter parent class fields" do
-        expect(model.tessa_fields.keys).to eq([:field1, :field3])
+        expect(model.tessa_fields.keys).to eq([:map, :field1, :field3])
       end
     end
   end
