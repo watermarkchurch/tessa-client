@@ -76,7 +76,7 @@ module Tessa
         dynamic_extensions = 
           if !multiple
             Module.new do
-              class_eval <<~RUBY, __FILE__, __LINE__ + 1
+              class_eval <<~CODE, __FILE__, __LINE__ + 1
                 def #{name}
                   # has_one_attached defines the getter using class_eval so we can't call
                   # super() here.
@@ -103,11 +103,11 @@ module Tessa
                   ActiveStorage::Attached::One.new("#{name}", self, dependent: :purge_later)
                     .attach(attachable)
                 end
-              RUBY
+                CODE
             end
           else
             Module.new do
-              class_eval <<~RUBY, __FILE__, __LINE__ + 1
+              class_eval <<~CODE, __FILE__, __LINE__ + 1
                 def #{name}
                   if #{name}_attachments.present?
                     return #{name}_attachments.map do |a|
@@ -134,7 +134,7 @@ module Tessa
                   ActiveStorage::Attached::Many.new("#{name}", self, dependent: :purge_later)
                     .attach(attachables)
                 end
-              RUBY
+              CODE
             end
           end
 
