@@ -140,6 +140,47 @@ RSpec.describe Tessa::Model do
         end
       end
     end
+
+    context "on a form object" do
+      let(:model) {
+        SingleAssetModelForm
+      }
+      subject(:getter) { instance.avatar }
+      
+      it 'returns nil when empty' do
+        expect(getter).to be_nil
+      end
+
+      it 'returns assigned upload object' do
+        file = Rack::Test::UploadedFile.new("README.md")
+        instance.avatar = file
+        expect(getter).to eq(file)
+      end
+    end
+  end
+
+  describe "#asset_setter" do
+    let(:instance) { model.new }
+
+    context "with a singular typed field" do
+      let(:model) {
+        SingleAssetModel
+      }
+      subject(:getter) { instance.avatar }
+
+      it 'attaches uploaded file' do
+        ActiveStorage::Current.host = 'https://test.com'
+
+        file = Rack::Test::UploadedFile.new("README.md")
+        instance.avatar = file
+
+        expect(getter.name).to eq('avatar')
+        expect(getter.filename).to eq('README.md')
+        expect(getter.content_type).to eq('text/plain')
+        expect(getter.service_url)
+          .to start_with('https://test.com/rails/active_storage/disk/')
+      end
+    end
   end
 
   describe "#apply_tessa_change_sets" do

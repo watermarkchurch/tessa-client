@@ -1,4 +1,5 @@
 require 'tessa/model/field'
+require 'tessa/active_storage/asset_wrapper'
 
 module Tessa
   module Model
@@ -62,16 +63,17 @@ module Tessa
       def asset(name, args={})
         # new ActiveStorage wrapper
         multiple = args[:multiple]
-        if respond_to?(:has_one_attached)
-          if multiple
-            has_many_attached(name)
-          else
-            has_one_attached(name)
-          end
-        else
+        if !respond_to?(:has_one_attached)
           # Form objects should just hold on to the attachment until it can
           # be added to a model.
           attr_accessor(name)
+          return
+        end
+
+        if multiple
+          has_many_attached(name)
+        else
+          has_one_attached(name)
         end
 
         # old Tessa fallback
@@ -106,7 +108,7 @@ module Tessa
 
                 def #{name}=(attachable)
                   # Every new upload is going to ActiveStorage
-                  ActiveStorage::Attached::One.new("#{name}", self, dependent: :purge_later)
+                  ::ActiveStorage::Attached::One.new("#{name}", self, dependent: :purge_later)
                     .attach(attachable)
                 end
                 CODE
@@ -137,7 +139,7 @@ module Tessa
 
                 def #{name}=(attachables)
                   # Every new upload is going to ActiveStorage
-                  ActiveStorage::Attached::Many.new("#{name}", self, dependent: :purge_later)
+                  ::ActiveStorage::Attached::Many.new("#{name}", self, dependent: :purge_later)
                     .attach(attachables)
                 end
               CODE
