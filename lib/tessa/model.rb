@@ -62,10 +62,16 @@ module Tessa
       def asset(name, args={})
         # new ActiveStorage wrapper
         multiple = args[:multiple]
-        if multiple
-          has_many_attached(name)
+        if respond_to?(:has_one_attached)
+          if multiple
+            has_many_attached(name)
+          else
+            has_one_attached(name)
+          end
         else
-          has_one_attached(name)
+          # Form objects should just hold on to the attachment until it can
+          # be added to a model.
+          attr_accessor(name)
         end
 
         # old Tessa fallback

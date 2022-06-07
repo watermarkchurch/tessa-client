@@ -65,6 +65,21 @@ RSpec.describe Tessa::Model do
         expect(model.tessa_fields.keys).to eq([:avatar])
       end
     end
+
+    context "on a form object" do
+      let(:model) {
+        SingleAssetModelForm
+      }
+      subject(:instance) { model.new }
+
+      it "creates an #avatar method" do
+        expect(instance).to respond_to(:avatar)
+      end
+
+      it "creates an #avatar= method" do
+        expect(instance).to respond_to(:avatar=)
+      end
+    end
   end
 
   describe "#asset_getter" do
