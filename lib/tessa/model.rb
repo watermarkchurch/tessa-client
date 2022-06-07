@@ -97,6 +97,12 @@ module Tessa
                   # fallback to Tessa's database column
                   super
                 end
+
+                def #{name}=(attachable)
+                  # Every new upload is going to ActiveStorage
+                  ActiveStorage::Attached::One.new("#{name}", self, dependent: :purge_later)
+                    .attach(attachable)
+                end
               RUBY
             end
           else
@@ -122,6 +128,12 @@ module Tessa
                   # fallback to Tessa's database column
                   super
                 end
+
+                def #{name}=(attachables)
+                  # Every new upload is going to ActiveStorage
+                  ActiveStorage::Attached::Many.new("#{name}", self, dependent: :purge_later)
+                    .attach(attachables)
+                end
               RUBY
             end
           end
@@ -131,6 +143,7 @@ module Tessa
         # Undefine the activestorage default attribute method so it falls back
         # to our dynamic module
         remove_method "#{name}"
+        remove_method "#{name}="
       end
 
       def tessa_fields
