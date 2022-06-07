@@ -2,7 +2,7 @@ class CreateSingleAssetModels < ActiveRecord::Migration[5.2]
   def change
     create_table :single_asset_models do |t|
       t.string :title
-      t.integer :map_id
+      t.integer :avatar_id
 
       t.timestamps
     end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_06_06_221900) do
+ActiveRecord::Schema.define(version: 2022_06_07_191519) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -33,9 +33,16 @@ ActiveRecord::Schema.define(version: 2022_06_06_221900) do
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
+  create_table "multiple_asset_models", force: :cascade do |t|
+    t.string "title"
+    t.string "another_place", default: "[]"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "single_asset_models", force: :cascade do |t|
     t.string "title"
-    t.integer "map_id"
+    t.integer "avatar_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

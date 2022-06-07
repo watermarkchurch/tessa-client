@@ -6,25 +6,15 @@ RSpec.describe Tessa::Model do
     SingleAssetModel
   }
 
-  after do
-    Object.send(:remove_const, :SingleAssetModel)
-    load 'spec/dummy/app/models/single_asset_model.rb'
-  end
-
   it { is_expected.to be_a(Module) }
 
   describe "::asset" do
     it "creates ModelField and sets it by name to @tessa_fields" do
-      model.asset :new_field
-      expect(model.tessa_fields[:new_field]).to be_a(Tessa::Model::Field)
+      expect(model.tessa_fields[:avatar]).to be_a(Tessa::Model::Field)
     end
 
     context "with a field named :avatar" do
       subject(:instance) { model.new }
-      before do
-        model.send :attr_accessor, :avatar_id
-        model.asset :avatar
-      end
 
       it "creates an #avatar method" do
         expect(instance).to respond_to(:avatar)
@@ -48,32 +38,31 @@ RSpec.describe Tessa::Model do
     end
 
     context "with customized field" do
-      before do
-        model.asset :custom_field, multiple: true, id_field: "another_place"
-      end
+      let(:model) {
+        MultipleAssetModel
+      }
 
       it "sets all attributes on ModelField properly" do
-        field = model.tessa_fields[:custom_field]
-        expect(field.name).to eq("custom_field")
+        field = model.tessa_fields[:multiple_field]
+        expect(field.name).to eq("multiple_field")
         expect(field.multiple).to eq(true)
         expect(field.id_field).to eq("another_place")
       end
     end
 
     context "with inheritance hierarchy" do
-      let(:submodel) { Class.new(model) }
-      before do
-        model.asset :field1
-        submodel.asset :field2
-        model.asset :field3
-      end
+      let(:submodel) {
+        Class.new(model) do
+          asset :field2
+        end
+      }
 
       it "submodel has its own list of fields" do
-        expect(submodel.tessa_fields.keys).to eq([:map, :field1, :field2])
+        expect(submodel.tessa_fields.keys).to eq([:avatar, :field2])
       end
 
       it "does not alter parent class fields" do
-        expect(model.tessa_fields.keys).to eq([:map, :field1, :field3])
+        expect(model.tessa_fields.keys).to eq([:avatar])
       end
     end
   end
@@ -279,60 +268,59 @@ RSpec.describe Tessa::Model do
 
   describe "#asset_getter" do
     let(:instance) { model.new }
-    subject(:getter) { instance.file }
 
     context "with a multiple typed field" do
-      before do
-        model.send(:attr_accessor, :file_ids)
-        model.asset :file, multiple: true
-      end
+      let(:model) {
+        MultipleAssetModel
+      }
+      subject(:getter) { instance.multiple_field }
 
       it "calls find for each of the file_ids and returns result" do
-        instance.file_ids = [1, 2, 3]
+        instance.another_place = [1, 2, 3]
         expect(Tessa::Asset).to receive(:find).with([1, 2, 3]).and_return([:a1, :a2, :a3])
         expect(getter).to eq([:a1, :a2, :a3])
       end
 
       it "caches the result" do
-        instance.file_ids = [1]
+        instance.another_place = [1]
         expect(Tessa::Asset).to receive(:find).and_return(:val).once
-        instance.file
-        instance.file
+        instance.multiple_field
+        instance.multiple_field
       end
 
       context "with no values" do
         it "does not call find" do
-          instance.file_ids = []
+          instance.another_place = []
           expect(Tessa::Asset).not_to receive(:find)
-          expect(instance.file).to eq([])
+          expect(instance.multiple_field).to eq([])
         end
       end
     end
 
     context "with a singular typed field" do
-      before do
-        model.send(:attr_accessor, :file_id)
-        model.asset :file
-      end
+      let(:model) {
+        SingleAssetModel
+      }
+      subject(:getter) { instance.avatar }
 
       it "calls find for file_id and returns result" do
-        instance.file_id = 1
+        instance.avatar_id = 1
         expect(Tessa::Asset).to receive(:find).with(1).and_return(:a1)
         expect(getter).to eq(:a1)
       end
 
       it "caches the result" do
-        instance.file_id = 1
+        instance.avatar_id = 1
         expect(Tessa::Asset).to receive(:find).and_return(:val).once
-        instance.file
-        instance.file
+        instance.avatar
+        instance.avatar
       end
 
       context "with nil value" do
         it "does not call find" do
-          instance.file_id = nil
+          instance.avatar_id = nil
           expect(Tessa::Asset).not_to receive(:find)
-          expect(instance.file).to be_nil
+          expect(instance.avatar).to be_nil
         end
       end
     end

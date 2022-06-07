@@ -1,5 +1,5 @@
 class SingleAssetModel < ActiveRecord::Base
   include Tessa::Model
 
-  asset :map
+  asset :avatar
 end

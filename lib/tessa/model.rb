@@ -69,54 +69,68 @@ module Tessa
         end
 
         # old Tessa fallback
-        field = tessa_fields[name] = Field.new(args.merge(name: name))
-        dynamic_extensions = Module.new
+        tessa_fields[name] = Field.new(args.merge(name: name))
 
-        # field getter - first checks attachment
-        dynamic_extensions.send(:define_method, name) do
-          if attachment = super.attached?
-            if multiple
-              return attachment.map { |a| Tessa::ActiveStorage::AssetWrapper.new(a) }
-            else
-              return Tessa::ActiveStorage::AssetWrapper.new(attachment)
+        # Create and insert a dynamic module into the module tree, which allows
+        # us to override attribute methods and call super()
+        dynamic_extensions = 
+          if !multiple
+            Module.new do
+              class_eval <<~RUBY, __FILE__, __LINE__ + 1
+                def #{name}
+                  # has_one_attached defines the getter using class_eval so we can't call
+                  # super() here.
+                  if #{name}_attachment.present?
+                    return Tessa::ActiveStorage::AssetWrapper.new(#{name}_attachment)
+                  end
+
+                  # fall back to old Tessa fetch if not present
+                  if field = self.class.tessa_fields["#{name}".to_sym]
+                    @#{name} ||= fetch_tessa_remote_assets(field.id(on: self))
+                  end
+                end
+
+                def #{name}_id
+                  # Use the attachment's key
+                  return #{name}_attachment.key if #{name}_attachment.present?
+
+                  # fallback to Tessa's database column
+                  super
+                end
+              RUBY
+            end
+          else
+            Module.new do
+              class_eval <<~RUBY, __FILE__, __LINE__ + 1
+                def #{name}
+                  if #{name}_attachments.present?
+                    return #{name}_attachments.map do |a|
+                      Tessa::ActiveStorage::AssetWrapper.new(a)
+                    end
+                  end
+
+                  # fall back to old Tessa fetch if not present
+                  if field = self.class.tessa_fields["#{name}".to_sym]
+                    @#{name} ||= fetch_tessa_remote_assets(field.id(on: self))
+                  end
+                end
+
+                def #{name}_ids
+                  # Use the attachment's key
+                  return #{name}_attachments.map(&:key) if #{name}_attachments.present?
+
+                  # fallback to Tessa's database column
+                  super
+                end
+              RUBY
             end
           end
 
-          # fall back to old Tessa fetch if not present
-          if instance_variable_defined?(ivar = "@#{name}")
-            instance_variable_get(ivar)
-          else
-            instance_variable_set(
-              ivar,
-              fetch_tessa_remote_assets(field.id(on: self))
-            )
-          end
-        end
-
-        # field IDs
-        if multiple
-          dynamic_extensions.send(:define_method, multiple ? "#{name}_ids" : "#{name}_id") do
-            # ActiveStorage takes precedence
-            attachments = public_send("#{name}_attachments")
-            # Use the attachment's keys
-            return attachments.map(&:key) if attachments.present?
-
-            # fallback to Tessa's database column
-            super
-          end
-        else
-          dynamic_extensions.send(:define_method, multiple ? "#{name}_ids" : "#{name}_id") do
-            # ActiveStorage takes precedence
-            attachment = public_send("#{name}_attachment")
-            # Use the attachment's key
-            return attachment.key if attachment.present?
-
-            # fallback to Tessa's database column
-            super
-          end
-        end
-
         include dynamic_extensions
+
+        # Undefine the activestorage default attribute method so it falls back
+        # to our dynamic module
+        remove_method "#{name}"
       end
 
       def tessa_fields
