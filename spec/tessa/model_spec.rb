@@ -132,6 +132,20 @@ RSpec.describe Tessa::Model do
         instance.avatar
       end
 
+      it "wraps ActiveStorage uploads with AssetWrapper" do
+        file = Rack::Test::UploadedFile.new("README.md")
+        instance.avatar = file
+        
+        asset = instance.avatar
+        expect(asset).to be_a(Tessa::ActiveStorage::AssetWrapper)
+        # This goes to the blobs URL, which then redirects to the backend service URL
+        expect(asset.public_url).to start_with('https://www.example.com/rails/active_storage/blobs/')
+        # This is a direct download to the service URL (in test mode that is "disk")
+        expect(asset.private_url).to start_with('https://www.example.com/rails/active_storage/disk/')
+        expect(asset.private_download_url).to start_with('https://www.example.com/rails/active_storage/disk/')
+        expect(asset.private_download_url).to include('&disposition=attachment')
+      end
+
       context "with nil value" do
         it "does not call find" do
           instance.avatar_id = nil
@@ -169,8 +183,6 @@ RSpec.describe Tessa::Model do
       subject(:getter) { instance.avatar }
 
       it 'attaches uploaded file' do
-        ActiveStorage::Current.host = 'https://test.com'
-
         file = Rack::Test::UploadedFile.new("README.md")
         instance.avatar = file
 
@@ -178,7 +190,7 @@ RSpec.describe Tessa::Model do
         expect(getter.filename).to eq('README.md')
         expect(getter.content_type).to eq('text/plain')
         expect(getter.service_url)
-          .to start_with('https://test.com/rails/active_storage/disk/')
+          .to start_with('https://www.example.com/rails/active_storage/disk/')
       end
     end
   end
