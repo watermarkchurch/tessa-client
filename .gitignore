@@ -15,3 +15,6 @@ mkmf.log
 .env
 
 node_modules
+
+# build artifacts
+app/assets/javascripts/**/*.js

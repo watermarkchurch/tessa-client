@@ -1,6 +1,7 @@
 import resolve from "@rollup/plugin-node-resolve"
 import commonjs from "@rollup/plugin-commonjs"
 import { terser } from "rollup-plugin-terser"
+import coffeescript from 'rollup-plugin-coffee-script'
 
 const terserOptions = {
  mangle: false,
@@ -13,27 +14,29 @@ const terserOptions = {
 
 export default [
   {
-    input: "app/javascript/activestorage/index.js",
+    input: "app/javascript/tessa/index.js.coffee",
     output: {
-      file: "app/assets/javascripts/activestorage.js",
+      file: "app/assets/javascripts/tessa.js",
       format: "umd",
-      name: "ActiveStorage"
+      name: "Tessa"
     },
     plugins: [
       resolve(),
+      coffeescript(),
       commonjs(),
       terser(terserOptions)
     ]
   },
 
   {
-    input: "app/javascript/activestorage/index.js",
+    input: "app/javascript/tessa/index.js.coffee",
     output: {
-      file: "app/assets/javascripts/activestorage.esm.js",
+      file: "app/assets/javascripts/tessa.esm.js",
       format: "es"
     },
     plugins: [
       resolve(),
+      coffeescript(),
       commonjs(),
       terser(terserOptions)
     ]
