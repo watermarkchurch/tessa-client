@@ -1,3 +1,5 @@
+import {FileChecksum} from '../activestorage/file_checksum'
+
 window.WCC ||= {}
 $ = window.jQuery
 
@@ -11,6 +13,7 @@ class window.WCC.Dropzone extends window.Dropzone
 
     # Set in our custom accept method
     xhr.open file.uploadMethod, file.uploadURL, true
+    xhr.setRequestHeader headerName, headerValue for headerName, headerValue of file.uploadHeaders
 
     response = null
 
@@ -103,16 +106,22 @@ WCC.Dropzone.prototype.defaultOptions.accept = (file, done) ->
 
   postData = $.extend postData, tessaParams
 
-  $.ajax '/tessa/uploads',
-    type: 'POST',
-    data: postData,
-    success: (response) ->
-      file.uploadURL = response.upload_url
-      file.uploadMethod = response.upload_method
-      file.assetID = response.asset_id
-      done()
-    error: (response) ->
-      done("Failed to initiate the upload process!")
+  FileChecksum.create file, (error, checksum) ->
+    return done(error) if error
+
+    postData['checksum'] = checksum
+
+    $.ajax '/tessa/uploads',
+      type: 'POST',
+      data: postData,
+      success: (response) ->
+        file.uploadURL = response.upload_url
+        file.uploadMethod = response.upload_method
+        file.uploadHeaders = response.upload_headers
+        file.assetID = response.asset_id
+        done()
+      error: (response) ->
+        done("Failed to initiate the upload process!")
 
 window.WCC.tessaInit = (sel) ->
   sel = sel || 'form:has(.tessa-upload)'

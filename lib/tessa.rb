@@ -34,3 +34,7 @@ module Tessa
   end
 
 end
+
+if defined?(Rails::Railtie)
+  require "tessa/engine"
+end

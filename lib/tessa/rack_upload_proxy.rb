@@ -12,7 +12,7 @@ module Tessa
         filename: params["name"],
         byte_size: params["size"],
         content_type: params["mime_type"],
-        checksum: '' # TODO
+        checksum: params["checksum"]
       })
 
       env['rack.session'][:tessa_upload_asset_ids] ||= []
