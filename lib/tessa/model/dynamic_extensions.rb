@@ -29,7 +29,7 @@ class Tessa::DynamicExtensions
             end
           end
 
-          def #{name}_id
+          def #{field.id_field}
             # Use the attachment's key
             return #{name}_attachment.key if #{name}_attachment.present?
 
@@ -53,13 +53,9 @@ class Tessa::DynamicExtensions
             else
               a.attach(attachable)
             end
-          end
 
-          private
-
-          def _assign_attributes(attributes)
-            puts "assign!"
-            super
+            # overwrite the tessa ID in the database
+            self.#{field.id_field} = nil
           end
         CODE
       mod
@@ -82,7 +78,7 @@ class Tessa::DynamicExtensions
             end
           end
 
-          def #{name}_ids
+          def #{field.id_field}
             # Use the attachment's key
             return #{name}_attachments.map(&:key) if #{name}_attachments.present?
 
@@ -94,7 +90,6 @@ class Tessa::DynamicExtensions
             # Every new upload is going to ActiveStorage
             a = @active_storage_attached_#{name} ||=
               ::ActiveStorage::Attached::Many.new("#{name}", self, dependent: :purge_later)
-                .attach(attachables)
 
             case attachables
             when Tessa::AssetChangeSet
@@ -105,13 +100,11 @@ class Tessa::DynamicExtensions
             when nil
               a.detach
             else
-              a.attach(attachables)
+              a.attach(*attachables)
             end
-          end
 
-          def _assign_attributes(attributes)
-            puts "assign!"
-            super
+            # overwrite the tessa ID in the database
+            self.#{field.id_field} = nil
           end
         CODE
       mod

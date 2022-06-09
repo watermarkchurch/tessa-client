@@ -192,6 +192,44 @@ RSpec.describe Tessa::Model do
         expect(getter.service_url)
           .to start_with('https://www.example.com/rails/active_storage/disk/')
       end
+
+      it 'sets the ID to be the ActiveStorage key' do
+        file = Rack::Test::UploadedFile.new("README.md")
+        instance.avatar = file
+
+        expect(instance.avatar_id).to eq(instance.avatar_attachment.key)
+      end
+    end
+
+    context "with a multiple typed field" do
+      let(:model) {
+        MultipleAssetModel
+      }
+
+      it 'attaches uploaded files' do
+        file = Rack::Test::UploadedFile.new("README.md")
+        file2 = Rack::Test::UploadedFile.new("LICENSE.txt")
+        instance.multiple_field = [file, file2]
+
+        expect(instance.multiple_field[0].name).to eq('multiple_field')
+        expect(instance.multiple_field[0].filename).to eq('README.md')
+        expect(instance.multiple_field[0].content_type).to eq('text/plain')
+        expect(instance.multiple_field[0].service_url)
+          .to start_with('https://www.example.com/rails/active_storage/disk/')
+        expect(instance.multiple_field[1].name).to eq('multiple_field')
+        expect(instance.multiple_field[1].filename).to eq('LICENSE.txt')
+        expect(instance.multiple_field[1].content_type).to eq('text/plain')
+        expect(instance.multiple_field[1].service_url)
+          .to start_with('https://www.example.com/rails/active_storage/disk/')
+      end
+
+      it 'sets the ID to be the ActiveStorage key' do
+        file = Rack::Test::UploadedFile.new("README.md")
+        file2 = Rack::Test::UploadedFile.new("LICENSE.txt")
+        instance.multiple_field = [file, file2]
+
+        expect(instance.another_place).to eq(instance.multiple_field_attachments.map(&:key))
+      end
     end
   end
 
