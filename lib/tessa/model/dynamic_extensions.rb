@@ -131,8 +131,11 @@ class Tessa::DynamicExtensions
           def #{name}
             @#{name} ||=
               if #{name}_id
-                ::ActiveStorage::Blob.find_by(key: #{name}_id) ||
+                if blob = ::ActiveStorage::Blob.find_by(key: #{name}_id)
+                  Tessa::ActiveStorage::AssetWrapper.new(blob)
+                else
                   Tessa::Asset.find(#{name}_id)
+                end
               end
           end
         CODE
@@ -148,8 +151,13 @@ class Tessa::DynamicExtensions
           def #{name}
             @#{name} ||=
               if #{name}_ids.present?
-                ::ActiveStorage::Blob.where(key: #{name}_ids).to_a ||
+                if (blobs = ::ActiveStorage::Blob.where(key: #{name}_ids).to_a).present?
+                  blobs.map do |a|
+                    Tessa::ActiveStorage::AssetWrapper.new(a)
+                  end
+                else
                   Tessa::Asset.find(*#{name}_ids)
+                end
               end
           end
         CODE

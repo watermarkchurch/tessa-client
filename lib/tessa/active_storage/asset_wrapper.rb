@@ -12,5 +12,9 @@ module Tessa::ActiveStorage
     def private_download_url
       service_url(disposition: 'attachment')
     end
+
+    def meta
+      {}
+    end
   end
 end
