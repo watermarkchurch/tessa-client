@@ -13,3 +13,5 @@
 *.a
 mkmf.log
 .env
+
+node_modules
