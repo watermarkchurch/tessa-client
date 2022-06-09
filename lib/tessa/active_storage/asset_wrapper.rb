@@ -16,5 +16,9 @@ module Tessa::ActiveStorage
     def meta
       {}
     end
+
+    def failure?
+      false
+    end
   end
 end

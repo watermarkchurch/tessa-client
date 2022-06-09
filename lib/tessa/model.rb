@@ -36,7 +36,17 @@ module Tessa
 
       def fetch_tessa_remote_assets(ids)
         if [*ids].empty?
-          [] if ids.is_a?(Array)
+          if ids.is_a?(Array)
+            []
+          else
+            nil
+          end
+        elsif (blobs = ::ActiveStorage::Blob.where(key: ids).to_a).present?
+          if ids.is_a?(Array)
+            blobs.map { |a| Tessa::ActiveStorage::AssetWrapper.new(a) }
+          else
+            Tessa::ActiveStorage::AssetWrapper.new(blobs.first)
+          end
         else
           Tessa::Asset.find(ids)
         end

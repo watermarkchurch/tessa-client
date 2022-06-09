@@ -129,14 +129,7 @@ class Tessa::DynamicExtensions
           attr_accessor :#{name}_id
           attr_writer :#{name}
           def #{name}
-            @#{name} ||=
-              if #{name}_id
-                if blob = ::ActiveStorage::Blob.find_by(key: #{name}_id)
-                  Tessa::ActiveStorage::AssetWrapper.new(blob)
-                else
-                  Tessa::Asset.find(#{name}_id)
-                end
-              end
+            @#{name} ||= fetch_tessa_remote_assets(#{name}_id)
           end
         CODE
       mod
@@ -149,16 +142,7 @@ class Tessa::DynamicExtensions
           attr_accessor :#{name}_ids
           attr_writer :#{name}
           def #{name}
-            @#{name} ||=
-              if #{name}_ids.present?
-                if (blobs = ::ActiveStorage::Blob.where(key: #{name}_ids).to_a).present?
-                  blobs.map do |a|
-                    Tessa::ActiveStorage::AssetWrapper.new(a)
-                  end
-                else
-                  Tessa::Asset.find(*#{name}_ids)
-                end
-              end
+            @#{name} ||= fetch_tessa_remote_assets(#{name}_ids)
           end
         CODE
       mod
