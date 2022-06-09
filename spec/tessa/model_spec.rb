@@ -199,6 +199,13 @@ RSpec.describe Tessa::Model do
 
         expect(instance.avatar_id).to eq(instance.avatar_attachment.key)
       end
+
+      it 'sets the ID in the attributes' do
+        file = Rack::Test::UploadedFile.new("README.md")
+        instance.avatar = file
+        
+        expect(instance.attributes['avatar_id']).to eq(instance.avatar_attachment.key)
+      end
     end
 
     context "with a multiple typed field" do
@@ -229,6 +236,14 @@ RSpec.describe Tessa::Model do
         instance.multiple_field = [file, file2]
 
         expect(instance.another_place).to eq(instance.multiple_field_attachments.map(&:key))
+      end
+
+      it 'sets the ID in the attributes' do
+        file = Rack::Test::UploadedFile.new("README.md")
+        file2 = Rack::Test::UploadedFile.new("LICENSE.txt")
+        instance.multiple_field = [file, file2]
+        
+        expect(instance.attributes['another_place']).to eq(instance.multiple_field_attachments.map(&:key))
       end
     end
   end

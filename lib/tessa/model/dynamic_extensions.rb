@@ -57,6 +57,12 @@ class Tessa::DynamicExtensions
             # overwrite the tessa ID in the database
             self.#{field.id_field} = nil
           end
+
+          def attributes
+            super.merge({
+              '#{field.id_field}' => #{field.id_field}
+            })
+          end
         CODE
       mod
     end
@@ -105,6 +111,12 @@ class Tessa::DynamicExtensions
 
             # overwrite the tessa ID in the database
             self.#{field.id_field} = nil
+          end
+
+          def attributes
+            super.merge({
+              '#{field.id_field}' => #{field.id_field}
+            })
           end
         CODE
       mod
