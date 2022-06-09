@@ -61,6 +61,9 @@ module Tessa
 
     module ClassMethods
       def asset(name, args={})
+        # old Tessa fallback
+        tessa_fields[name] = Field.new(args.merge(name: name))
+        
         # new ActiveStorage wrapper
         multiple = args[:multiple]
         if !respond_to?(:has_one_attached)
@@ -75,9 +78,6 @@ module Tessa
         else
           has_one_attached(name)
         end
-
-        # old Tessa fallback
-        tessa_fields[name] = Field.new(args.merge(name: name))
 
         # Create and insert a dynamic module into the module tree, which allows
         # us to override attribute methods and call super()
@@ -108,8 +108,20 @@ module Tessa
 
                 def #{name}=(attachable)
                   # Every new upload is going to ActiveStorage
-                  ::ActiveStorage::Attached::One.new("#{name}", self, dependent: :purge_later)
-                    .attach(attachable)
+                  a = @active_storage_attached_#{name} ||=
+                    ::ActiveStorage::Attached::One.new("#{name}", self, dependent: :purge_later)
+                  
+                  case attachable
+                  when Tessa::AssetChangeSet
+                    attachable.changes.each do |change|
+                      a.attach(change.id) if change.add?
+                      a.detach if change.remove?
+                    end
+                  when nil
+                    a.detach
+                  else
+                    a.attach(attachable)
+                  end
                 end
                 CODE
             end
@@ -139,8 +151,21 @@ module Tessa
 
                 def #{name}=(attachables)
                   # Every new upload is going to ActiveStorage
-                  ::ActiveStorage::Attached::Many.new("#{name}", self, dependent: :purge_later)
-                    .attach(attachables)
+                  a = @active_storage_attached_#{name} ||=
+                    ::ActiveStorage::Attached::Many.new("#{name}", self, dependent: :purge_later)
+                      .attach(attachables)
+
+                  case attachables
+                  when Tessa::AssetChangeSet
+                    attachables.changes.each do |change|
+                      a.attach(change.id) if change.add?
+                      raise 'TODO' if change.remove?
+                    end
+                  when nil
+                    a.detach
+                  else
+                    a.attach(attachables)
+                  end
                 end
               CODE
             end

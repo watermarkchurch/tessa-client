@@ -2,20 +2,26 @@ module Tessa
   class RackUploadProxy
 
     def call(env)
+      request = Rack::Request.new(env)
+      ::ActiveStorage::Current.host ||= request.base_url
+
       # Call in to ActiveStorage to create a DirectUpload blob
       params = env['rack.request.form_hash']
 
-      blob = ActiveStorage::Blob.create_before_direct_upload!({
+      blob = ::ActiveStorage::Blob.create_before_direct_upload!({
         filename: params["name"],
         byte_size: params["size"],
-        content_type: params["mime_type"]
-        # Note: we don't yet calculate the MD5 client side so can't require it here
-      }.reject { |k, v| v.nil? })
+        content_type: params["mime_type"],
+        checksum: '' # TODO
+      })
+
+      env['rack.session'][:tessa_upload_asset_ids] ||= []
+      env['rack.session'][:tessa_upload_asset_ids] << blob.signed_id
 
       response = {
         asset_id: blob.signed_id,
         upload_url: blob.service_url_for_direct_upload,
-        upload_method: 'POST', # ActiveStorage is always POST
+        upload_method: 'PUT', # ActiveStorage is always PUT
         upload_headers: blob.service_headers_for_direct_upload
       }
 
