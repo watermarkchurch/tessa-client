@@ -1,4 +1,5 @@
 require 'tessa/model/field'
+require 'tessa/model/dynamic_extensions'
 require 'tessa/active_storage/asset_wrapper'
 
 module Tessa
@@ -61,122 +62,39 @@ module Tessa
 
     module ClassMethods
       def asset(name, args={})
-        # old Tessa fallback
-        tessa_fields[name] = Field.new(args.merge(name: name))
+        field = tessa_fields[name] = Field.new(args.merge(name: name))
         
-        # new ActiveStorage wrapper
         multiple = args[:multiple]
-        if !respond_to?(:has_one_attached)
-          # Form objects should just hold on to the attachment until it can
-          # be added to a model.
-          attr_accessor(name)
-          return
+
+
+        if respond_to?(:has_one_attached)
+          if multiple
+            has_many_attached(name)
+          else
+            has_one_attached(name)
+          end
         end
 
-        if multiple
-          has_many_attached(name)
-        else
-          has_one_attached(name)
-        end
-
-        # Create and insert a dynamic module into the module tree, which allows
-        # us to override attribute methods and call super()
-        dynamic_extensions = 
-          if !multiple
-            Module.new do
-              class_eval <<~CODE, __FILE__, __LINE__ + 1
-                def #{name}
-                  # has_one_attached defines the getter using class_eval so we can't call
-                  # super() here.
-                  if #{name}_attachment.present?
-                    return Tessa::ActiveStorage::AssetWrapper.new(#{name}_attachment)
-                  end
-
-                  # fall back to old Tessa fetch if not present
-                  if field = self.class.tessa_fields["#{name}".to_sym]
-                    @#{name} ||= fetch_tessa_remote_assets(field.id(on: self))
-                  end
-                end
-
-                def #{name}_id
-                  # Use the attachment's key
-                  return #{name}_attachment.key if #{name}_attachment.present?
-
-                  # fallback to Tessa's database column
-                  super
-                end
-
-                def #{name}=(attachable)
-                  # Every new upload is going to ActiveStorage
-                  a = @active_storage_attached_#{name} ||=
-                    ::ActiveStorage::Attached::One.new("#{name}", self, dependent: :purge_later)
-                  
-                  case attachable
-                  when Tessa::AssetChangeSet
-                    attachable.changes.each do |change|
-                      a.attach(change.id) if change.add?
-                      a.detach if change.remove?
-                    end
-                  when nil
-                    a.detach
-                  else
-                    a.attach(attachable)
-                  end
-                end
-                CODE
+        dynamic_extensions =
+          if respond_to?(:has_one_attached)
+            if multiple
+              ::Tessa::DynamicExtensions::MultipleRecord.new(field)
+            else
+              ::Tessa::DynamicExtensions::SingleRecord.new(field)
             end
           else
-            Module.new do
-              class_eval <<~CODE, __FILE__, __LINE__ + 1
-                def #{name}
-                  if #{name}_attachments.present?
-                    return #{name}_attachments.map do |a|
-                      Tessa::ActiveStorage::AssetWrapper.new(a)
-                    end
-                  end
-
-                  # fall back to old Tessa fetch if not present
-                  if field = self.class.tessa_fields["#{name}".to_sym]
-                    @#{name} ||= fetch_tessa_remote_assets(field.id(on: self))
-                  end
-                end
-
-                def #{name}_ids
-                  # Use the attachment's key
-                  return #{name}_attachments.map(&:key) if #{name}_attachments.present?
-
-                  # fallback to Tessa's database column
-                  super
-                end
-
-                def #{name}=(attachables)
-                  # Every new upload is going to ActiveStorage
-                  a = @active_storage_attached_#{name} ||=
-                    ::ActiveStorage::Attached::Many.new("#{name}", self, dependent: :purge_later)
-                      .attach(attachables)
-
-                  case attachables
-                  when Tessa::AssetChangeSet
-                    attachables.changes.each do |change|
-                      a.attach(change.id) if change.add?
-                      raise 'TODO' if change.remove?
-                    end
-                  when nil
-                    a.detach
-                  else
-                    a.attach(attachables)
-                  end
-                end
-              CODE
+            if multiple
+              ::Tessa::DynamicExtensions::MultipleFormObject.new(field)
+            else
+              ::Tessa::DynamicExtensions::SingleFormObject.new(field)
             end
           end
-
-        include dynamic_extensions
+        include dynamic_extensions.build(Module.new)
 
         # Undefine the activestorage default attribute method so it falls back
         # to our dynamic module
-        remove_method "#{name}"
-        remove_method "#{name}="
+        remove_method "#{name}" rescue nil
+        remove_method "#{name}=" rescue nil
       end
 
       def tessa_fields
