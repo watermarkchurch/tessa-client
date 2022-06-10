@@ -61,6 +61,11 @@ module Tessa
           else
             has_one_attached(name)
           end
+
+          # We have to replace the after_destroy_commit callback added above
+          callbacks = get_callbacks(:commit)
+          callbacks.delete(callbacks.to_a.last)
+          after_destroy_commit { public_send("#{name}_attachment")&.purge_later }
         end
 
         dynamic_extensions =
