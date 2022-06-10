@@ -28,6 +28,8 @@ module Tessa
       [200, {"Content-Type" => "application/json"}, [response.to_json]]
     rescue Tessa::RequestFailed
       [500, {"Content-Type" => "application/json"}, [{ "error" => "Failed to retreive upload URL" }.to_json]]
+    rescue ActiveRecord::NotNullViolation => e
+      [400, {"Content-Type" => "application/json"}, [{ "error" => e.message }.to_json]]
     end
 
     def self.call(*args)

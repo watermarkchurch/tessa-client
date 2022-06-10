@@ -16,28 +16,24 @@ RSpec.describe Tessa::RackUploadProxy do
   }
   let(:params) { {} }
   let(:session) { {} }
-  let(:upload) {
-    Tessa::Upload.new(
-      asset_id: 123,
-      upload_url: "a-url",
-      upload_method: "a-method",
-    )
-  }
-  before do
-    allow(Tessa::Upload).to receive(:create).and_return(upload)
-  end
+
+  let(:blob) { ActiveStorage::Blob.last }
 
   shared_examples_for "proper json return" do
     it "returns asset_id" do
-      expect(result.json['asset_id']).to eq(123)
+      expect(result.json['asset_id']).to eq(blob.signed_id)
     end
 
     it "returns upload_url" do
-      expect(result.json['upload_url']).to eq("a-url")
+      expect(result.json['upload_url']).to eq(blob.service_url_for_direct_upload)
     end
 
     it "returns upload_method" do
-      expect(result.json['upload_method']).to eq("a-method")
+      expect(result.json['upload_method']).to eq('PUT')
+    end
+
+    it "returns upload_method" do
+      expect(result.json['upload_headers']).to eq(blob.service_headers_for_direct_upload)
     end
 
     it "returns a 200 response" do
@@ -47,38 +43,12 @@ RSpec.describe Tessa::RackUploadProxy do
     it "sets the mime type to application/json" do
       expect(result.headers).to include("Content-Type" => "application/json")
     end
-
-    context "when Tessa::Upload.create raises RequestFailed" do
-      before do
-        allow(Tessa::Upload).to receive(:create).and_raise(Tessa::RequestFailed)
-      end
-
-      it "returns a proper 500" do
-        expect(result.status).to eq(500)
-      end
-
-      it "sets the mime type to application/json" do
-        expect(result.headers).to include("Content-Type" => "application/json")
-      end
-
-      it "includes an error message in JSON response" do
-        expect(result.json['error']).to be_truthy
-      end
-    end
   end
 
   context "with no params and no session" do
-    it "calls Tessa::Upload.create" do
-      expect(Tessa::Upload).to receive(:create).and_return(upload)
-      result
+    it "raises a bad request error" do
+      expect(result.status).to eq(400)
     end
-
-    it "pushes the asset_id onto session" do
-      result
-      expect(session[:tessa_upload_asset_ids]).to eq([123])
-    end
-
-    it_behaves_like "proper json return"
   end
 
   context "with params" do
@@ -86,53 +56,20 @@ RSpec.describe Tessa::RackUploadProxy do
       {
         "name" => "my-name",
         "size" => 456,
-        "date" => "2020-01-01",
         "mime_type" => "plain/text",
+        "checksum" => '1234'
       }
     }
 
-    it "calls Tessa::Upload.create with 'name'" do
-      expect(Tessa::Upload).to receive(:create).with(hash_including(name: "my-name"))
-      result
-    end
+    it "creates the ActiveStorage blob" do
+      expect {
+        described_class.call(env)
+      }.to change { ActiveStorage::Blob.count }.by(1)
 
-    it "calls Tessa::Upload.create with 'size'" do
-      expect(Tessa::Upload).to receive(:create).with(hash_including(size: 456))
-      result
-    end
-
-    it "calls Tessa::Upload.create with 'date'" do
-      expect(Tessa::Upload).to receive(:create).with(hash_including(date: "2020-01-01"))
-      result
-    end
-
-    it "calls Tessa::Upload.create with 'mime_type'" do
-      expect(Tessa::Upload).to receive(:create).with(hash_including(mime_type: "plain/text"))
-      result
-    end
-
-    it_behaves_like "proper json return"
-  end
-
-  context "with no date param" do
-    let(:params) { {} }
-
-    it "calls Tessa::Upload.create without 'date'" do
-      expect(Tessa::Upload).to_not receive(:create).with(hash_including(:date))
-      result
-    end
-  end
-
-  context "with existing session" do
-    let(:session) {
-      {
-        tessa_upload_asset_ids: [:existing_id],
-      }
-    }
-
-    it "does not remove existing ids" do
-      result
-      expect(session[:tessa_upload_asset_ids]).to eq([:existing_id, 123])
+      expect(blob.filename).to eq('my-name')
+      expect(blob.byte_size).to eq(456)
+      expect(blob.content_type).to eq('plain/text')
+      expect(blob.checksum).to eq('1234')
     end
 
     it_behaves_like "proper json return"
