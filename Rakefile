@@ -17,3 +17,11 @@ task :pry => :environment do
   require 'pry'
   Pry.start
 end
+
+namespace :build do
+  task :js do
+    system("yarn build")
+  end
+end
+
+Rake::Task['build'].enhance ['build:js']
