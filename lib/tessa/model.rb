@@ -35,29 +35,7 @@ module Tessa
       end
 
       def fetch_tessa_remote_assets(ids)
-        if [*ids].empty?
-          if ids.is_a?(Array)
-            []
-          else
-            nil
-          end
-        elsif (blobs = ::ActiveStorage::Blob.where(key: ids).to_a).present?
-          if ids.is_a?(Array)
-            blobs.map { |a| Tessa::ActiveStorage::AssetWrapper.new(a) }
-          else
-            Tessa::ActiveStorage::AssetWrapper.new(blobs.first)
-          end
-        else
-          Tessa::Asset.find(ids)
-        end
-      rescue Tessa::RequestFailed => err
-        if ids.is_a?(Array)
-          ids.map do |id|
-            Tessa::Asset::Failure.factory(id: id, response: err.response)
-          end
-        else
-          Tessa::Asset::Failure.factory(id: ids, response: err.response)
-        end
+        Tessa.find_assets(ids)
       end
 
       private def reapplying_asset?(field, change_set)
