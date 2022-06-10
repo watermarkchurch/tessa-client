@@ -19,13 +19,18 @@ RSpec.describe Tessa::RackUploadProxy do
 
   let(:blob) { ActiveStorage::Blob.last }
 
+  before do
+    allow(ActiveStorage.verifier).to receive(:generate)
+      .and_return('some-consistent-token')
+  end
+
   shared_examples_for "proper json return" do
     it "returns asset_id" do
       expect(result.json['asset_id']).to eq(blob.signed_id)
     end
 
     it "returns upload_url" do
-      expect(result.json['upload_url']).to eq(blob.service_url_for_direct_upload)
+      expect(result.json['upload_url']).to eq('https://www.example.com/rails/active_storage/disk/some-consistent-token')
     end
 
     it "returns upload_method" do
