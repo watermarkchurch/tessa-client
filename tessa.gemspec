@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "faraday", "<1"
+  spec.add_dependency "faraday"
   spec.add_dependency "virtus", "~>1.0.4"
 
   spec.add_development_dependency "rake", "~> 10.0"
