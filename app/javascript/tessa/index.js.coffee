@@ -13,7 +13,6 @@ class window.WCC.Dropzone extends window.Dropzone
 
     # Set in our custom accept method
     xhr.open file.uploadMethod, file.uploadURL, true
-    xhr.setRequestHeader headerName, headerValue for headerName, headerValue of file.uploadHeaders
 
     response = null
 
@@ -76,7 +75,8 @@ class window.WCC.Dropzone extends window.Dropzone
       "Cache-Control": "no-cache",
       "X-Requested-With": "XMLHttpRequest",
 
-    extend headers, @options.headers if @options.headers
+    $.extend headers, @options.headers if @options.headers
+    $.extend headers, file.uploadHeaders if file.uploadHeaders
 
     xhr.setRequestHeader headerName, headerValue for headerName, headerValue of headers
 
