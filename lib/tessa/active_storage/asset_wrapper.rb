@@ -1,5 +1,9 @@
 module Tessa::ActiveStorage
   class AssetWrapper < SimpleDelegator
+    def id
+      key
+    end
+
     def public_url
       Rails.application.routes.url_helpers.
         rails_blob_url(__getobj__, disposition: :inline)
@@ -14,7 +18,10 @@ module Tessa::ActiveStorage
     end
 
     def meta
-      {}
+      {
+        mime_type: content_type,
+        size: byte_size
+      }
     end
 
     def failure?
