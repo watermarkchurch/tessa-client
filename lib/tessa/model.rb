@@ -1,4 +1,6 @@
 require 'tessa/model/field'
+require 'tessa/model/dynamic_extensions'
+require 'tessa/active_storage/asset_wrapper'
 
 module Tessa
   module Model
@@ -33,19 +35,7 @@ module Tessa
       end
 
       def fetch_tessa_remote_assets(ids)
-        if [*ids].empty?
-          [] if ids.is_a?(Array)
-        else
-          Tessa::Asset.find(ids)
-        end
-      rescue Tessa::RequestFailed => err
-        if ids.is_a?(Array)
-          ids.map do |id|
-            Tessa::Asset::Failure.factory(id: id, response: err.response)
-          end
-        else
-          Tessa::Asset::Failure.factory(id: ids, response: err.response)
-        end
+        Tessa.find_assets(ids)
       end
 
       private def reapplying_asset?(field, change_set)
@@ -61,37 +51,43 @@ module Tessa
     module ClassMethods
       def asset(name, args={})
         field = tessa_fields[name] = Field.new(args.merge(name: name))
+        
+        multiple = args[:multiple]
 
-        dynamic_extensions = Module.new
 
-        dynamic_extensions.send(:define_method, name) do
-          if instance_variable_defined?(ivar = "@#{name}")
-            instance_variable_get(ivar)
+        if respond_to?(:has_one_attached)
+          if multiple
+            has_many_attached(name)
           else
-            instance_variable_set(
-              ivar,
-              fetch_tessa_remote_assets(field.id(on: self))
-            )
-          end
-        end
-
-        dynamic_extensions.send(:define_method, "#{name}=") do |value|
-          change_set = field.change_set_for(value)
-
-          # should effectively cause a no-op
-          return if reapplying_asset?(field, change_set)
-
-          if !(field.multiple? && value.is_a?(AssetChangeSet))
-            new_ids = change_set.scoped_changes.select(&:add?).map(&:id)
-            change_set += field.difference_change_set(new_ids, on: self)
+            has_one_attached(name)
           end
 
-          pending_tessa_change_sets[name] += change_set
-
-          field.apply(change_set, on: self)
+          # We have to replace the after_destroy_commit callback added above
+          callbacks = get_callbacks(:commit)
+          callbacks.delete(callbacks.to_a.last)
+          after_destroy_commit { public_send("#{name}_attachment")&.purge_later }
         end
 
-        include dynamic_extensions
+        dynamic_extensions =
+          if respond_to?(:has_one_attached)
+            if multiple
+              ::Tessa::DynamicExtensions::MultipleRecord.new(field)
+            else
+              ::Tessa::DynamicExtensions::SingleRecord.new(field)
+            end
+          else
+            if multiple
+              ::Tessa::DynamicExtensions::MultipleFormObject.new(field)
+            else
+              ::Tessa::DynamicExtensions::SingleFormObject.new(field)
+            end
+          end
+        include dynamic_extensions.build(Module.new)
+
+        # Undefine the activestorage default attribute method so it falls back
+        # to our dynamic module
+        remove_method "#{name}" rescue nil
+        remove_method "#{name}=" rescue nil
       end
 
       def tessa_fields

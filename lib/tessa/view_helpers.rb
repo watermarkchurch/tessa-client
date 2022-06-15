@@ -1,8 +1,10 @@
 module Tessa
   module ViewHelpers
-    def tessa_image_tag(asset)
+    def tessa_image_tag(asset, private: false)
       handle_asset_failure(asset) do
-        image_tag(asset.private_url)
+        image_tag(
+          private ? asset.private_url : asset.public_url
+        )
       end
     end
 

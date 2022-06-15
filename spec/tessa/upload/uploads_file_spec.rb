@@ -69,14 +69,4 @@ RSpec.describe Tessa::Upload::UploadsFile do
       end
     end
   end
-
-  describe ".connection_factory" do
-    it "returns a new Faraday::Connection with the default adapter" do
-      obj = described_class.connection_factory
-      expect(obj).to be_a(Faraday::Connection)
-      expect(obj.builder.handlers)
-        .to eq([Faraday::Adapter::NetHttp])
-    end
-  end
-
 end
