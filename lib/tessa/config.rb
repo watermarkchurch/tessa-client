@@ -11,7 +11,11 @@ module Tessa
 
     def connection
       @connection ||= Faraday.new(url: url) do |conn|
-        conn.basic_auth username, password
+        if conn.respond_to?(:basic_auth)
+          conn.basic_auth username, password
+        else # Faraday >= 1.0
+          conn.request :authorization, :basic, username, password
+        end
         conn.request :url_encoded
         conn.adapter Faraday.default_adapter
       end
