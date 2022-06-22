@@ -44,9 +44,11 @@ class Tessa::DynamicExtensions
             
             case attachable
             when Tessa::AssetChangeSet
-              attachable.changes.each do |change|
-                a.attach(change.id) if change.add?
-                a.detach if change.remove?
+              attachable.changes.select(&:remove?).each { a.detatch }
+              attachable.changes.select(&:add?).each do |change|
+                next if #{field.id_field} == change.id
+
+                a.attach(change.id)
               end
             when nil
               a.detach
@@ -72,24 +74,22 @@ class Tessa::DynamicExtensions
     def build(mod)
       mod.class_eval <<~CODE, __FILE__, __LINE__ + 1
           def #{name}
-            if #{name}_attachments.present?
-              return #{name}_attachments.map do |a|
-                Tessa::ActiveStorage::AssetWrapper.new(a)
-              end
-            end
-
-            # fall back to old Tessa fetch if not present
-            if field = self.class.tessa_fields["#{name}".to_sym]
-              @#{name} ||= fetch_tessa_remote_assets(field.id(on: self))
-            end
+            field = self.class.tessa_fields["#{name}".to_sym]
+            tessa_ids = field.id(on: self) - #{name}_attachments.map(&:key)
+            
+            @#{name} ||= [
+              *#{name}_attachments.map { |a| Tessa::ActiveStorage::AssetWrapper.new(a) },
+              *fetch_tessa_remote_assets(tessa_ids)
+            ]
           end
 
           def #{field.id_field}
-            # Use the attachment's key
-            return #{name}_attachments.map(&:key) if #{name}_attachments.present?
-
-            # fallback to Tessa's database column
-            super
+            [
+              # Use the attachment's key
+              *#{name}_attachments.map(&:key),
+              # include from Tessa's database column
+              *super
+            ]
           end
 
           def #{name}=(attachables)
@@ -99,18 +99,25 @@ class Tessa::DynamicExtensions
 
             case attachables
             when Tessa::AssetChangeSet
-              attachables.changes.each do |change|
-                a.attach(change.id) if change.add?
-                raise 'TODO' if change.remove?
+              attachables.changes.select(&:remove?).each do |change|
+                if existing = #{name}_attachments.find { |a| a.key == change.id }
+                  existing.destroy
+                else
+                  ids = self.#{field.id_field}
+                  ids.delete(change.id.to_i)
+                  self.#{field.id_field} = ids
+                end
+              end
+              attachables.changes.select(&:add?).each do |change|
+                next if #{field.id_field}.include? change.id
+
+                a.attach(change.id)
               end
             when nil
               a.detach
             else
               a.attach(*attachables)
             end
-
-            # overwrite the tessa ID in the database
-            self.#{field.id_field} = nil
           end
 
           def attributes

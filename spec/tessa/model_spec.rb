@@ -41,6 +41,7 @@ RSpec.describe Tessa::Model do
       let(:model) {
         MultipleAssetModel
       }
+      let(:instance) { model.new(another_place: []) }
 
       it "sets all attributes on ModelField properly" do
         field = model.tessa_fields[:multiple_field]
@@ -89,6 +90,7 @@ RSpec.describe Tessa::Model do
       let(:model) {
         MultipleAssetModel
       }
+      let(:instance) { model.new(another_place: []) }
       subject(:getter) { instance.multiple_field }
 
       it "calls find for each of the file_ids and returns result" do
@@ -181,9 +183,11 @@ RSpec.describe Tessa::Model do
         SingleAssetModel
       }
       subject(:getter) { instance.avatar }
+      let(:file) {
+        Rack::Test::UploadedFile.new("README.md")
+      }
 
       it 'attaches uploaded file' do
-        file = Rack::Test::UploadedFile.new("README.md")
         instance.avatar = file
 
         expect(getter.name).to eq('avatar')
@@ -194,17 +198,49 @@ RSpec.describe Tessa::Model do
       end
 
       it 'sets the ID to be the ActiveStorage key' do
-        file = Rack::Test::UploadedFile.new("README.md")
         instance.avatar = file
 
         expect(instance.avatar_id).to eq(instance.avatar_attachment.key)
       end
 
       it 'sets the ID in the attributes' do
-        file = Rack::Test::UploadedFile.new("README.md")
         instance.avatar = file
         
         expect(instance.attributes['avatar_id']).to eq(instance.avatar_attachment.key)
+      end
+
+      it 'attaches signed ID from Tessa::AssetChangeSet' do
+        blob = ::ActiveStorage::Blob.create_before_direct_upload!({
+          filename: 'README.md',
+          byte_size: file.size,
+          content_type: file.content_type,
+          checksum: '1234'
+        })
+
+        changeset = Tessa::AssetChangeSet.new(
+          changes: [{ 'id' => blob.signed_id, 'action' => 'add' }]
+        )
+        instance.avatar = changeset
+
+        expect(instance.avatar_id).to eq(instance.avatar_attachment.key)
+      end
+
+      it 'does nothing when "add"ing an existing blob' do
+        # Before this HTTP POST, we've previously uploaded this file
+        instance.avatar = file
+
+        # In this HTTP POST, we re-upload the 'add' action with the same ID
+        changeset = Tessa::AssetChangeSet.new(
+          changes: [{ 'id' => instance.avatar_attachment.key, 'action' => 'add' }]
+        )
+
+        # We expect that we're not going to detatch the existing attachment
+        expect(instance.avatar_attachment).to_not receive(:destroy)
+
+        # act
+        instance.avatar = changeset
+
+        expect(instance.avatar_id).to eq(instance.avatar_attachment.key)
       end
     end
 
@@ -212,10 +248,15 @@ RSpec.describe Tessa::Model do
       let(:model) {
         MultipleAssetModel
       }
+      let(:instance) { model.new(another_place: []) }
+      let(:file) {
+        Rack::Test::UploadedFile.new("README.md")
+      }
+      let(:file2) {
+        Rack::Test::UploadedFile.new("LICENSE.txt")
+      }
 
       it 'attaches uploaded files' do
-        file = Rack::Test::UploadedFile.new("README.md")
-        file2 = Rack::Test::UploadedFile.new("LICENSE.txt")
         instance.multiple_field = [file, file2]
 
         expect(instance.multiple_field[0].name).to eq('multiple_field')
@@ -231,19 +272,118 @@ RSpec.describe Tessa::Model do
       end
 
       it 'sets the ID to be the ActiveStorage key' do
-        file = Rack::Test::UploadedFile.new("README.md")
-        file2 = Rack::Test::UploadedFile.new("LICENSE.txt")
         instance.multiple_field = [file, file2]
 
         expect(instance.another_place).to eq(instance.multiple_field_attachments.map(&:key))
       end
 
       it 'sets the ID in the attributes' do
-        file = Rack::Test::UploadedFile.new("README.md")
-        file2 = Rack::Test::UploadedFile.new("LICENSE.txt")
         instance.multiple_field = [file, file2]
         
         expect(instance.attributes['another_place']).to eq(instance.multiple_field_attachments.map(&:key))
+      end
+
+      it 'attaches signed ID from Tessa::AssetChangeSet' do
+        blob = ::ActiveStorage::Blob.create_before_direct_upload!({
+          filename: 'README.md',
+          byte_size: file.size,
+          content_type: file.content_type,
+          checksum: '1234'
+        })
+        blob2 = ::ActiveStorage::Blob.create_before_direct_upload!({
+          filename: "LICENSE.txt",
+          byte_size: file2.size,
+          content_type: file2.content_type,
+          checksum: '5678'
+        })
+
+        changeset = Tessa::AssetChangeSet.new(
+          changes: [
+            { 'id' => blob.signed_id, 'action' => 'add' },
+            { 'id' => blob2.signed_id, 'action' => 'add' },
+          ]
+        )
+        instance.multiple_field = changeset
+
+        expect(instance.another_place).to eq([
+          blob.key,
+          blob2.key
+        ])
+      end
+
+      it 'does nothing when "add"ing an existing blob' do
+        # Before this HTTP POST, we've previously uploaded these files
+        instance.multiple_field = [file, file2]
+        keys = instance.multiple_field_attachments.map(&:key)
+
+        # In this HTTP POST, we re-upload the 'add' action with the same ID
+        changeset = Tessa::AssetChangeSet.new(
+          changes: [
+            { 'id' => keys[0], 'action' => 'add' },
+            { 'id' => keys[1], 'action' => 'add' },
+          ]
+        )
+
+        # We expect that we're not going to detatch the existing attachment
+        instance.multiple_field_attachments.each do |a|
+          expect(a).to_not receive(:destroy)
+        end
+
+        # act
+        instance.multiple_field = changeset
+
+        expect(instance.another_place).to eq(keys)
+      end
+
+      it 'replaces Tessa assets with ActiveStorage assets' do
+        # Before deploying this code, we previously had DB records with Tessa IDs
+        instance.update!(another_place: [1, 2, 3])
+
+        # In this HTTP POST, we removed one of the tessa assets and uploaded a
+        # new ActiveStorage asset
+        blob = ::ActiveStorage::Blob.create_before_direct_upload!({
+          filename: 'README.md',
+          byte_size: file.size,
+          content_type: file.content_type,
+          checksum: '1234'
+        })
+        changeset = Tessa::AssetChangeSet.new(
+          changes: [
+            { 'id' => 1, 'action' => 'add' },
+            { 'id' => 2, 'action' => 'remove' },
+            { 'id' => 3, 'action' => 'add' },
+            { 'id' => blob.signed_id, 'action' => 'add' },
+          ]
+        )
+
+        # We'll download these assets when we access #multiple_field
+        allow(Tessa.config.connection).to receive(:get)
+          .with("/assets/1,3")
+          .and_return(double("response",
+            success?: true,
+            body: [
+              { 'id' => 1, 'public_url' => 'test1' },
+              { 'id' => 2, 'public_url' => 'test2' }
+            ].to_json))
+
+        blob.upload(file)
+
+        # act
+        instance.multiple_field = changeset
+
+        expect(instance.another_place).to eq([
+          blob.key, 1, 3
+        ])
+
+        assets = instance.multiple_field
+        expect(assets[0].key).to eq(blob.key)
+        expect(assets[0].service_url)
+          .to start_with('https://www.example.com/rails/active_storage/disk/')
+
+        expect(assets[1].id).to eq(1)
+        expect(assets[1].public_url).to eq('test1')
+        expect(assets[2].id).to eq(2)
+        expect(assets[2].public_url).to eq('test2')
       end
     end
   end
@@ -385,6 +525,7 @@ RSpec.describe Tessa::Model do
       let(:model) {
         MultipleAssetModel
       }
+      let(:instance) { model.new(another_place: []) }
       
       before do
         instance.another_place = [2, 3]

@@ -16,37 +16,51 @@ require "tessa/upload"
 require "tessa/view_helpers"
 
 module Tessa
-  def self.config
-    @config ||= Config.new
-  end
-
-  def self.setup
-    yield config
-  end
-
-  def self.find_assets(ids)
-    if [*ids].empty?
-      if ids.is_a?(Array)
-        []
-      else
-        nil
-      end
-    elsif (blobs = ::ActiveStorage::Blob.where(key: ids).to_a).present?
-      if ids.is_a?(Array)
-        blobs.map { |a| Tessa::ActiveStorage::AssetWrapper.new(a) }
-      else
-        Tessa::ActiveStorage::AssetWrapper.new(blobs.first)
-      end
-    else
-      Tessa::Asset.find(ids)
+  class << self
+    def config
+      @config ||= Config.new
     end
-  rescue Tessa::RequestFailed => err
-    if ids.is_a?(Array)
-      ids.map do |id|
-        Tessa::Asset::Failure.factory(id: id, response: err.response)
+
+    def setup
+      yield config
+    end
+
+    def find_assets(ids)
+      return find_all_assets(ids) if ids.is_a?(Array)
+
+      return find_asset(ids)
+    end
+
+    private
+
+    def find_asset(id)
+      return nil unless id
+
+      if blob = ::ActiveStorage::Blob.find_by(key: id)
+        return Tessa::ActiveStorage::AssetWrapper.new(blob)
       end
-    else
-      Tessa::Asset::Failure.factory(id: ids, response: err.response)
+
+      Tessa::Asset.find(id)
+    rescue Tessa::RequestFailed => err
+      Tessa::Asset::Failure.factory(id: id, response: err.response)
+    end
+
+    def find_all_assets(ids)
+      return [] if ids.empty?
+
+      blobs = ::ActiveStorage::Blob.where(key: ids).to_a
+        .map { |a| Tessa::ActiveStorage::AssetWrapper.new(a) }
+      ids = ids - blobs.map(&:key)
+      assets = 
+        begin
+          Tessa::Asset.find(ids) if ids.any?
+        rescue Tessa::RequestFailed => err
+          ids.map do |id|
+            Tessa::Asset::Failure.factory(id: id, response: err.response)
+          end
+        end
+
+      [*blobs, *assets]
     end
   end
 
