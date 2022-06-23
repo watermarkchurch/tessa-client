@@ -31,6 +31,10 @@ module Tessa
       return find_asset(ids)
     end
 
+    def model_registry
+      @model_registry ||= []
+    end
+
     private
 
     def find_asset(id)

@@ -1,3 +1,4 @@
+require 'webmock/rspec'
 require 'tessa'
 require 'tempfile'
 
@@ -11,6 +12,8 @@ if ENV['SIMPLE_COV'] || ENV['CC_TEST_REPORTER_ID']
 end
 
 RSpec.configure do |config|
+  WebMock.disable_net_connect!
+
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
   end

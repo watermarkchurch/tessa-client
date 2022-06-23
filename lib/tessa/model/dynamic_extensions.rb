@@ -105,7 +105,7 @@ class Tessa::DynamicExtensions
                 else
                   ids = self.#{field.id_field}
                   ids.delete(change.id.to_i)
-                  self.#{field.id_field} = ids
+                  self.#{field.id_field} = ids.any? ? ids : nil
                 end
               end
               attachables.changes.select(&:add?).each do |change|

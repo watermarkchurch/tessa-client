@@ -10,6 +10,8 @@ module Tessa
       base.extend ClassMethods
       base.after_commit :apply_tessa_change_sets if base.respond_to?(:after_commit)
       base.before_destroy :remove_all_tessa_assets if base.respond_to?(:before_destroy)
+
+      Tessa.model_registry << base
     end
 
     module InstanceMethods
