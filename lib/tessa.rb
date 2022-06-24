@@ -14,6 +14,7 @@ require "tessa/model"
 require "tessa/rack_upload_proxy"
 require "tessa/upload"
 require "tessa/view_helpers"
+require "tessa/jobs/migrate_assets_job"
 
 module Tessa
   class << self

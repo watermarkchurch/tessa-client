@@ -2,6 +2,8 @@ require 'open-uri'
 
 class Tessa::MigrateAssetsJob < ActiveJob::Base
 
+  queue_as :low
+
   def perform(*args)
     options = args&.extract_options!
     options = {
