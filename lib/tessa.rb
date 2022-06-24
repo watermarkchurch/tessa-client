@@ -14,7 +14,10 @@ require "tessa/model"
 require "tessa/rack_upload_proxy"
 require "tessa/upload"
 require "tessa/view_helpers"
-require "tessa/jobs/migrate_assets_job"
+
+if defined?(ActiveJob)
+  require "tessa/jobs/migrate_assets_job"
+end
 
 module Tessa
   class << self
