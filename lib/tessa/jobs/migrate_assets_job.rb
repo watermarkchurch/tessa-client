@@ -75,14 +75,10 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
     end    
   end
 
-  def reupload_multiple(record, field_state)
-    raise 'TODO'
-  end
-
   def reupload_single(record, field_state)
     # models with ActiveStorage uploads have nil in the column, but if you call
     # the method it hits the dynamic extensions and gives you the blob key
-    database_id = record.attributes_before_type_cast[field_state.tessa_field.id_field]
+    database_id = record.attributes["_tessa_#{field_state.tessa_field.id_field}"]
     return unless database_id
 
     asset = Tessa::Asset.find(database_id)
@@ -93,6 +89,23 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
     }
 
     record.public_send("#{field_state.tessa_field.name}=", attachable)
+    record.save!
+  end
+
+  def reupload_multiple(record, field_state)
+    database_ids = record.attributes["_tessa_#{field_state.tessa_field.id_field}"]
+    return unless database_ids
+    
+    assets = Tessa::Asset.find(database_ids)
+
+    attachables = assets.map do |asset|
+      {
+        io: URI.open(asset.private_download_url),
+        filename: asset.meta[:name]
+      }
+    end
+
+    record.public_send("#{field_state.tessa_field.name}=", attachables)
     record.save!
   end
 
