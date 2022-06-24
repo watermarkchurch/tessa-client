@@ -1,3 +1,5 @@
+require 'open-uri'
+
 class Tessa::MigrateAssetsJob < ActiveJob::Base
 
   def perform(*args)
@@ -8,6 +10,11 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
     }.merge!(options&.symbolize_keys || {})
     processing_state = args.first ||
       load_models_from_registry
+
+    if processing_state.fully_processed?
+      Rails.logger.info("Nothing to do - all models have transitioned to ActiveStorage")
+      return
+    end
 
     processing_state.batch_count = 0
     while processing_state.batch_count < options[:batch_size]
@@ -61,7 +68,32 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
   end
 
   def reupload(record, field_state)
-    # TODO
+    if field_state.tessa_field.multiple?
+      reupload_multiple(record, field_state)
+    else
+      reupload_single(record, field_state)
+    end    
+  end
+
+  def reupload_multiple(record, field_state)
+    raise 'TODO'
+  end
+
+  def reupload_single(record, field_state)
+    # models with ActiveStorage uploads have nil in the column, but if you call
+    # the method it hits the dynamic extensions and gives you the blob key
+    database_id = record.attributes_before_type_cast[field_state.tessa_field.id_field]
+    return unless database_id
+
+    asset = Tessa::Asset.find(database_id)
+
+    attachable = {
+      io: URI.open(asset.private_download_url),
+      filename: asset.meta[:name]
+    }
+
+    record.public_send("#{field_state.tessa_field.name}=", attachable)
+    record.save!
   end
 
   def load_models_from_registry
@@ -86,7 +118,7 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
     end
 
     def next_model
-      model_queue.first { |i| !i.fully_processed? }
+      model_queue.detect { |i| !i.fully_processed? }
     end
 
     def fully_processed?
@@ -105,7 +137,7 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
     end
 
     def next_field
-      field_queue.first { |i| !i.fully_processed? }
+      field_queue.detect { |i| !i.fully_processed? }
     end
 
     def model
@@ -132,12 +164,12 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
       @model ||= class_name.constantize
     end
 
-    def field
+    def tessa_field
       model.tessa_fields[field_name]
     end
 
     def query
-      model.where.not(Hash[field.id_field, nil])
+      model.where.not(Hash[tessa_field.id_field, nil])
     end
 
     def count

@@ -12,15 +12,20 @@ RSpec.describe Tessa::MigrateAssetsJob do
 
   it 'creates attachments for old tessa assets' do
     allow(Tessa::Asset).to receive(:find)
-      .with([1, 2])
-      .and_return([
+      .with(1)
+      .and_return(
         Tessa::Asset.new(id: 1,
           meta: { name: 'README.md' },
-          private_download_url: 'https://test.com/README.md'),
+          private_download_url: 'https://test.com/README.md')
+      )
+    
+    allow(Tessa::Asset).to receive(:find)
+      .with(2)
+      .and_return(
         Tessa::Asset.new(id: 2,
           meta: { name: 'LICENSE.txt' },
           private_download_url: 'https://test.com/LICENSE.txt'),
-      ])
+      )
 
     stub_request(:get, 'https://test.com/README.md')
       .to_return(body: File.new('README.md'))
@@ -38,10 +43,13 @@ RSpec.describe Tessa::MigrateAssetsJob do
     }.to change { ActiveStorage::Attachment.count }.by(2)
 
     models.each do |m|
-      expect(m.reload.avatar_id).to eq(nil)
+      expect(m.reload.avatar_id).to eq(m.avatar.key)
       # Now it's in activestorage
       expect(m.avatar.public_url).to start_with(
         'https://www.example.com/rails/active_storage/blobs/')
     end
+
+    expect(SingleAssetModel.where.not('avatar_id' => nil).count)
+      .to eq(0)
   end
 end
