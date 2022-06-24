@@ -6,10 +6,11 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
     options = args&.extract_options!
     options = {
       batch_size: 10,
-      interval: 10.minutes
+      interval: 10.minutes.to_i
     }.merge!(options&.symbolize_keys || {})
-    processing_state = args.first ||
-      load_models_from_registry
+
+    interval = options[:interval].seconds
+    processing_state = args.first ? Marshal.load(args.first) : load_models_from_registry
 
     if processing_state.fully_processed?
       Rails.logger.info("Nothing to do - all models have transitioned to ActiveStorage")
@@ -25,8 +26,18 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
       break if processing_state.fully_processed?
     end
 
-    unless processing_state.fully_processed?
-      self.class.perform_later(processing_state, options)
+    if processing_state.fully_processed?
+      Rails.logger.info("Finished processing all Tessa assets")
+    else
+      remaining_batches = (processing_state.count / options[:batch_size].to_f).ceil
+
+      Rails.logger.info("Continuing processing in #{interval}, "\
+        "ETA #{remaining_batches * interval}. "\
+        "Working on #{processing_state.next_model.next_field}")
+
+      processing_state.batch_count = 0
+      self.class.set(wait: interval)
+        .perform_later(Marshal.dump(processing_state), options)
     end
   end
 
@@ -53,12 +64,12 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
       next_batch.each do |record|
         begin
           reupload(record, field_state)
-
+          field_state.success_count += 1
         rescue StandardError => ex
           Rails.logger.error("Error reuploading #{record.id}##{field_state.field_name}\n#{ex}")
           field_state.failed_ids << record.id
-        ensure
           field_state.offset += 1
+        ensure
           processing_state.batch_count += 1
         end
       end
@@ -136,6 +147,10 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
 
     def fully_processed?
       model_queue.all?(&:fully_processed?)
+    end
+
+    def count
+      model_queue.sum { |m| m.field_queue.sum { |f| f.count - f.offset } }
     end
   end
 

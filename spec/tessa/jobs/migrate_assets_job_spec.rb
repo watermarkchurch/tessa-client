@@ -103,4 +103,149 @@ RSpec.describe Tessa::MigrateAssetsJob do
     expect(MultipleAssetModel.where.not('another_place' => nil).count)
       .to eq(0)
   end
+
+  it 'Stops after hitting the batch size' do
+    1.upto(11).each do |i|
+      asset = Tessa::Asset.new(id: i,
+        meta: { name: 'README.md' },
+        private_download_url: 'https://test.com/README.md')
+      allow(Tessa::Asset).to receive(:find)
+        .with(i)
+        .and_return(asset)
+      allow(Tessa::Asset).to receive(:find)
+        .with([i])
+        .and_return([asset])
+    end
+    stub_request(:get, 'https://test.com/README.md')
+      .to_return(body: File.new('README.md'))
+
+    # Mix of the two models...
+    models =
+      1.upto(11).map do |i|
+        if i % 2 == 0
+          MultipleAssetModel.create!(another_place: [i])
+        else
+          SingleAssetModel.create!(avatar_id: i)
+        end
+      end
+
+    final_state = nil
+    final_options = nil
+    dbl = double('set')
+    expect(dbl).to receive(:perform_later) do |state, options|
+      final_state = Marshal.load(state)
+      final_options = options
+    end
+    expect(Tessa::MigrateAssetsJob).to receive(:set)
+      .with(wait: 10.minutes)
+      .and_return(dbl) 
+    
+    expect {
+      subject.perform
+    }.to change { ActiveStorage::Attachment.count }.by(10)
+
+    expect(final_state.fully_processed?).to be false
+    expect(final_options).to eq({
+      batch_size: 10,
+      interval: 10.minutes.to_i
+    })
+    # One of the two models was fully processed
+    expect(final_state.model_queue.count(&:fully_processed?))
+      .to eq(1)
+  end
+
+  it 'Skips over Tessa errors' do
+    1.upto(11).each do |i|
+      if i % 2 == 0
+        allow(Tessa::Asset).to receive(:find)
+          .with(i)
+          .and_raise(Tessa::RequestFailed)
+        next
+      end
+
+      allow(Tessa::Asset).to receive(:find)
+        .with(i)
+        .and_return(
+          Tessa::Asset.new(id: i,
+            meta: { name: 'README.md' },
+            private_download_url: 'https://test.com/README.md')
+        )
+    end
+    stub_request(:get, 'https://test.com/README.md')
+      .to_return(body: File.new('README.md'))
+
+    # Mix of the two models...
+    models =
+      1.upto(11).map do |i|
+        SingleAssetModel.create!(avatar_id: i)
+      end
+
+    final_state = nil
+    final_options = nil
+    dbl = double('set')
+    expect(dbl).to receive(:perform_later) do |state, options|
+      final_state = Marshal.load(state)
+      final_options = options
+    end
+    expect(Tessa::MigrateAssetsJob).to receive(:set)
+      .with(wait: 10.minutes)
+      .and_return(dbl) 
+    
+    expect {
+      subject.perform
+    }.to change { ActiveStorage::Attachment.count }.by(5)
+
+    expect(final_state.fully_processed?).to be false
+    field_state = final_state.next_model.next_field
+    expect(field_state.offset).to eq(5)
+    expect(field_state.failed_ids).to eq(
+      [2, 4, 6, 8, 10]
+    )
+  end
+
+  it 'Resumes from marshalled state' do
+
+    file = Rack::Test::UploadedFile.new('README.md')
+
+    state = Tessa::MigrateAssetsJob::ProcessingState.initialize_from_models(
+      [SingleAssetModel])
+    field_state = state.model_queue
+      .detect { |m| m.class_name == 'SingleAssetModel' }
+      .field_queue
+      .detect { |m| m.field_name == :avatar }
+    
+    1.upto(10).each do |i|
+      if i % 2 == 0
+        # This one failed
+        SingleAssetModel.create!(avatar_id: i).tap do |r|
+          field_state.failed_ids << r.id
+          field_state.offset += 1
+        end
+      else
+        # This one succeeded and is in ActiveStorage
+        SingleAssetModel.create!(avatar: file).tap do |r|
+          field_state.success_count += 1
+        end
+      end
+    end
+    
+    # This one still needs to transition
+    model = SingleAssetModel.create!(avatar_id: 11)
+
+    asset = Tessa::Asset.new(id: 11,
+      meta: { name: 'README.md' },
+      private_download_url: 'https://test.com/README.md')
+    allow(Tessa::Asset).to receive(:find)
+      .with(11)
+      .and_return(asset)
+    stub_request(:get, 'https://test.com/README.md')
+      .to_return(body: File.new('README.md'))
+
+    # Doesn't reenqueue since we finished processing
+    expect(Tessa::MigrateAssetsJob).to_not receive(:set)
+
+    expect {
+      subject.perform(Marshal.dump(state), { batch_size: 2, interval: 3 })
+    }.to change { ActiveStorage::Attachment.count }.by(1)
+  end
 end
