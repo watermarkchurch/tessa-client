@@ -15,6 +15,10 @@ require "tessa/rack_upload_proxy"
 require "tessa/upload"
 require "tessa/view_helpers"
 
+if defined?(ActiveJob)
+  require "tessa/jobs/migrate_assets_job"
+end
+
 module Tessa
   class << self
     def config
@@ -29,6 +33,10 @@ module Tessa
       return find_all_assets(ids) if ids.is_a?(Array)
 
       return find_asset(ids)
+    end
+
+    def model_registry
+      @model_registry ||= []
     end
 
     private

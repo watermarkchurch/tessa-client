@@ -62,7 +62,8 @@ class Tessa::DynamicExtensions
 
           def attributes
             super.merge({
-              '#{field.id_field}' => #{field.id_field}
+              '#{field.id_field}' => #{field.id_field},
+              '_tessa_#{field.id_field}' => super['#{field.id_field}']
             })
           end
         CODE
@@ -105,7 +106,7 @@ class Tessa::DynamicExtensions
                 else
                   ids = self.#{field.id_field}
                   ids.delete(change.id.to_i)
-                  self.#{field.id_field} = ids
+                  self.#{field.id_field} = ids.any? ? ids : nil
                 end
               end
               attachables.changes.select(&:add?).each do |change|
@@ -115,14 +116,17 @@ class Tessa::DynamicExtensions
               end
             when nil
               a.detach
+              self.#{field.id_field} = nil
             else
               a.attach(*attachables)
+              self.#{field.id_field} = nil
             end
           end
 
           def attributes
             super.merge({
-              '#{field.id_field}' => #{field.id_field}
+              '#{field.id_field}' => #{field.id_field},
+              '_tessa_#{field.id_field}' => super['#{field.id_field}']
             })
           end
         CODE

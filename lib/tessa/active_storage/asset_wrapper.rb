@@ -20,7 +20,8 @@ module Tessa::ActiveStorage
     def meta
       {
         mime_type: content_type,
-        size: byte_size
+        size: byte_size,
+        name: filename
       }
     end
 
