@@ -63,13 +63,17 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
         .offset(field_state.offset)
         .limit(remaining)
 
-      next_batch.each do |record|
+      next_batch.each_with_index do |record, idx|
         begin
+          # Wait 1 second in between records to slow things down and let the
+          # system process for a bit
+          sleep 1 if idx > 0
+
           reupload(record, field_state)
+          Rails.logger.info("#{record.class}#{record.id}##{field_state.field_name}: success")
           field_state.success_count += 1
         rescue StandardError => ex
-          Rails.logger.error("Error reuploading #{record.id}##{field_state.field_name}\n#{ex}")
-          field_state.failed_ids << record.id
+          Rails.logger.error("#{record.class}#{record.id}##{field_state.field_name}: error - #{ex}")
           field_state.offset += 1
         ensure
           processing_state.batch_count += 1
@@ -179,14 +183,13 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
     end
   end
 
-  FieldProcessingState = Struct.new(:class_name, :field_name, :offset, :success_count, :failed_ids) do
+  FieldProcessingState = Struct.new(:class_name, :field_name, :offset, :success_count) do
     def self.initialize_from_model(model, field_name)
       new(
         model.name,
         field_name,
         0,
-        0,
-        []
+        0
       )
     end
 

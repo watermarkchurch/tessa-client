@@ -198,9 +198,6 @@ RSpec.describe Tessa::MigrateAssetsJob do
     expect(final_state.fully_processed?).to be false
     field_state = final_state.next_model.next_field
     expect(field_state.offset).to eq(5)
-    expect(field_state.failed_ids).to eq(
-      [2, 4, 6, 8, 10]
-    )
   end
 
   it 'Resumes from marshalled state' do
@@ -218,7 +215,6 @@ RSpec.describe Tessa::MigrateAssetsJob do
       if i % 2 == 0
         # This one failed
         SingleAssetModel.create!(avatar_id: i).tap do |r|
-          field_state.failed_ids << r.id
           field_state.offset += 1
         end
       else
