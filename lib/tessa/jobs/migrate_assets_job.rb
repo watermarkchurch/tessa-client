@@ -34,7 +34,7 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
       remaining_batches = (processing_state.count / options[:batch_size].to_f).ceil
 
       Rails.logger.info("Continuing processing in #{interval}, "\
-        "ETA #{remaining_batches * interval}. "\
+        "ETA #{(remaining_batches * interval).from_now}. "\
         "Working on #{processing_state.next_model.next_field}")
 
       processing_state.batch_count = 0
