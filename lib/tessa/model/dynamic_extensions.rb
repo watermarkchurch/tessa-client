@@ -44,7 +44,7 @@ class Tessa::DynamicExtensions
             
             case attachable
             when Tessa::AssetChangeSet
-              attachable.changes.select(&:remove?).each { a.detatch }
+              attachable.changes.select(&:remove?).each { a.detach }
               attachable.changes.select(&:add?).each do |change|
                 next if #{field.id_field} == change.id
 
