@@ -10,7 +10,7 @@ namespace :tessa do
     unless Tessa::MigrateAssetsJob.complete?
       state = Tessa::MigrateAssetsJob::ProcessingState.initialize_from_models
 
-      raise StandardError, "Tessa::MigrateAssetsJob not yet complete!  #{state.count} records remain to be migrated."
+      abort "Tessa::MigrateAssetsJob not yet complete!  #{state.count} records remain to be migrated."
     end
   end
 end

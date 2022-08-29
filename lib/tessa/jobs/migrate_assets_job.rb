@@ -127,8 +127,6 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
   end
 
   def load_models_from_registry
-    Rails.application.eager_load!
-
     # Initialize our Record Keeping object
     ProcessingState.initialize_from_models
   end
@@ -143,6 +141,7 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
     def self.initialize_from_models(models = nil)
       unless models
         # Load all Tessa models that can have attachments (not form objects)
+        Rails.application.eager_load!
         models = Tessa.model_registry.select { |m| m.respond_to?(:has_one_attached) }
       end
 
