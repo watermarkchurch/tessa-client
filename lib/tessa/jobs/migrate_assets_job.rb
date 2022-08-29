@@ -129,16 +129,23 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
   def load_models_from_registry
     Rails.application.eager_load!
 
-    # Load all Tessa models that can have attachments (not form objects)
-    models = Tessa.model_registry
-      .select { |m| m.respond_to?(:has_one_attached) }
-
     # Initialize our Record Keeping object
-    ProcessingState.initialize_from_models(models)
+    ProcessingState.initialize_from_models
+  end
+
+  # Determines whether the migrate asset job is completed.  If true, running the
+  # job again will not do anything.
+  def self.complete?
+    ProcessingState.initialize_from_models.fully_processed?
   end
 
   ProcessingState = Struct.new(:model_queue, :batch_count) do
-    def self.initialize_from_models(models)
+    def self.initialize_from_models(models = nil)
+      unless models
+        # Load all Tessa models that can have attachments (not form objects)
+        models = Tessa.model_registry.select { |m| m.respond_to?(:has_one_attached) }
+      end
+
       new(
         models.map do |model|
           ModelProcessingState.initialize_from_model(model)

@@ -4,4 +4,13 @@ namespace :tessa do
   task :migrate => :environment do
     Tessa::MigrateAssetsJob.perform_later
   end
+
+  desc "Verifies that the migration has completed"
+  task :verify => :environment do
+    unless Tessa::MigrateAssetsJob.complete?
+      state = Tessa::MigrateAssetsJob::ProcessingState.initialize_from_models
+
+      raise StandardError, "Tessa::MigrateAssetsJob not yet complete!  #{state.count} records remain to be migrated."
+    end
+  end
 end
