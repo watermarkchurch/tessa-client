@@ -8,46 +8,12 @@ module Tessa
     def self.included(base)
       base.send :include, InstanceMethods
       base.extend ClassMethods
-      base.after_commit :apply_tessa_change_sets if base.respond_to?(:after_commit)
-      base.before_destroy :remove_all_tessa_assets if base.respond_to?(:before_destroy)
 
       Tessa.model_registry << base
     end
 
     module InstanceMethods
 
-      def pending_tessa_change_sets
-        @pending_tessa_change_sets ||= Hash.new { AssetChangeSet.new }
-      end
-
-      def apply_tessa_change_sets
-        pending_tessa_change_sets.delete_if do |_, change_set|
-          change_set.apply
-        end
-      end
-
-      def remove_all_tessa_assets
-        self.class.tessa_fields.each do |name, field|
-          change_set = pending_tessa_change_sets[name]
-          field.ids(on: self).each do |asset_id|
-            change_set.remove(asset_id)
-          end
-          pending_tessa_change_sets[name] = change_set
-        end
-      end
-
-      def fetch_tessa_remote_assets(ids)
-        Tessa.find_assets(ids)
-      end
-
-      private def reapplying_asset?(field, change_set)
-        additions = change_set.changes.select(&:add?)
-
-        return false if additions.none?
-        return false if change_set.changes.size > additions.size
-
-        additions.all? { |a| field.ids(on: self).include?(a.id) }
-      end
     end
 
     module ClassMethods

@@ -93,17 +93,10 @@ RSpec.describe Tessa::Model do
       let(:instance) { model.new(another_place: []) }
       subject(:getter) { instance.multiple_field }
 
-      it "calls find for each of the file_ids and returns result" do
+      it "No longer calls Tessa::Asset#find" do
         instance.another_place = [1, 2, 3]
-        expect(Tessa::Asset).to receive(:find).with([1, 2, 3]).and_return([:a1, :a2, :a3])
-        expect(getter).to eq([:a1, :a2, :a3])
-      end
-
-      it "caches the result" do
-        instance.another_place = [1]
-        expect(Tessa::Asset).to receive(:find).and_return(:val).once
-        instance.multiple_field
-        instance.multiple_field
+        expect(Tessa::Asset).to_not receive(:find)
+        expect(getter).to eq([])
       end
 
       context "with no values" do
@@ -121,17 +114,10 @@ RSpec.describe Tessa::Model do
       }
       subject(:getter) { instance.avatar }
 
-      it "calls find for file_id and returns result" do
+      it "No longer calls Tessa::Asset#find" do
         instance.avatar_id = 1
-        expect(Tessa::Asset).to receive(:find).with(1).and_return(:a1)
-        expect(getter).to eq(:a1)
-      end
-
-      it "caches the result" do
-        instance.avatar_id = 1
-        expect(Tessa::Asset).to receive(:find).and_return(:val).once
-        instance.avatar
-        instance.avatar
+        expect(Tessa::Asset).to_not receive(:find)
+        expect(getter).to eq(nil)
       end
 
       it "wraps ActiveStorage uploads with AssetWrapper" do
@@ -334,245 +320,6 @@ RSpec.describe Tessa::Model do
 
         expect(instance.another_place).to eq(keys)
       end
-
-      it 'replaces Tessa assets with ActiveStorage assets' do
-        # Before deploying this code, we previously had DB records with Tessa IDs
-        instance.update!(another_place: [1, 2, 3])
-
-        # In this HTTP POST, we removed one of the tessa assets and uploaded a
-        # new ActiveStorage asset
-        blob = ::ActiveStorage::Blob.create_before_direct_upload!({
-          filename: 'README.md',
-          byte_size: file.size,
-          content_type: file.content_type,
-          checksum: '1234'
-        })
-        changeset = Tessa::AssetChangeSet.new(
-          changes: [
-            { 'id' => 1, 'action' => 'add' },
-            { 'id' => 2, 'action' => 'remove' },
-            { 'id' => 3, 'action' => 'add' },
-            { 'id' => blob.signed_id, 'action' => 'add' },
-          ]
-        )
-
-        # We'll download these assets when we access #multiple_field
-        allow(Tessa.config.connection).to receive(:get)
-          .with("/assets/1,3")
-          .and_return(double("response",
-            success?: true,
-            body: [
-              { 'id' => 1, 'public_url' => 'test1' },
-              { 'id' => 2, 'public_url' => 'test2' }
-            ].to_json))
-
-        blob.upload(file)
-
-        # act
-        instance.multiple_field = changeset
-
-        expect(instance.another_place).to eq([
-          blob.key, 1, 3
-        ])
-
-        assets = instance.multiple_field
-        expect(assets[0].key).to eq(blob.key)
-        expect(assets[0].service_url)
-          .to start_with('https://www.example.com/rails/active_storage/disk/')
-
-        expect(assets[1].id).to eq(1)
-        expect(assets[1].public_url).to eq('test1')
-        expect(assets[2].id).to eq(2)
-        expect(assets[2].public_url).to eq('test2')
-      end
     end
   end
-
-  describe "#apply_tessa_change_sets" do
-    let(:instance) { model.new }
-    let(:sets) { [ instance_spy(Tessa::AssetChangeSet) ] }
-
-    before do
-      instance.instance_variable_set(
-        :@pending_tessa_change_sets,
-        {
-          avatar: sets[0],
-        }
-      )
-    end
-
-    it "iterates over all pending changesets calling apply" do
-      instance.apply_tessa_change_sets
-      expect(sets[0]).to have_received(:apply)
-    end
-
-    it "removes all changesets from list" do
-      instance.apply_tessa_change_sets
-      expect(instance.pending_tessa_change_sets).to be_empty
-    end
-
-    context "no @pending_tessa_change_sets ivar" do
-      before do
-        instance.instance_variable_set(
-          :@pending_tessa_change_sets,
-          nil
-        )
-      end
-
-      it "doesn't raise error" do
-        expect { instance.apply_tessa_change_sets }.to_not raise_error
-      end
-    end
-  end
-
-  describe "#fetch_tessa_remote_assets" do
-    subject(:result) { model.new.fetch_tessa_remote_assets(arg) }
-
-    context "argument is `nil`" do
-      let(:arg) { nil }
-
-      it "returns nil" do
-        expect(result).to be_nil
-      end
-    end
-
-    context "argument is `[]`" do
-      let(:arg) { [] }
-
-      it "returns []" do
-        expect(result).to be_a(Array)
-        expect(result).to be_empty
-      end
-    end
-
-    context "when argument is not blank" do
-      let(:id) { rand(100) }
-      let(:arg) { id }
-
-      it "calls Tessa::Asset.find with arguments" do
-        expect(Tessa::Asset).to receive(:find).with(arg)
-        result
-      end
-
-      context "when Tessa::Asset.find raises RequestFailed exception" do
-        let(:error) {
-          Tessa::RequestFailed.new("test exception", double(status: '500'))
-        }
-
-        before do
-          allow(Tessa::Asset).to receive(:find).and_raise(error)
-        end
-
-        context "argument is single id" do
-          let(:arg) { id }
-
-          it "returns Failure" do
-            expect(result).to be_a(Tessa::Asset::Failure)
-          end
-
-          it "returns asset with proper data" do
-            expect(result.id).to eq(arg)
-          end
-        end
-
-        context "argument is array" do
-          let(:arg) { [ id, id * 2 ] }
-
-          it "returns array" do
-            expect(result).to be_a(Array)
-          end
-
-          it "returns instances of Failure" do
-            expect(result).to all( be_a(Tessa::Asset::Failure) )
-          end
-
-          it "returns array with an asset for each id passed" do
-            arg.zip(result) do |a, r|
-              expect(r.id).to eq(a)
-            end
-          end
-        end
-      end
-    end
-  end
-
-  describe "#remove_all_tessa_assets" do
-    let(:instance) { model.new }
-
-    context "with a single typed field" do
-      let(:model) {
-        SingleAssetModel
-      }
-
-      before do
-        instance.avatar_id = 1
-      end
-
-      it "adds pending change sets for each field removing all current assets" do
-        instance.remove_all_tessa_assets
-        changes = instance.pending_tessa_change_sets.values
-          .reduce(Tessa::AssetChangeSet.new, :+)
-          .changes
-          .map { |change| [change.id, change.action.to_sym] }
-          expect(changes).to eq([
-            [1, :remove]
-          ])
-      end
-    end
-
-
-    context "with a multiple typed field" do
-      let(:model) {
-        MultipleAssetModel
-      }
-      let(:instance) { model.new(another_place: []) }
-      
-      before do
-        instance.another_place = [2, 3]
-      end
-
-      it "adds pending change sets for each field removing all current assets" do
-        instance.remove_all_tessa_assets
-        changes = instance.pending_tessa_change_sets.values
-          .reduce(Tessa::AssetChangeSet.new, :+)
-          .changes
-          .map { |change| [change.id, change.action.to_sym] }
-          expect(changes).to eq([
-            [2, :remove],
-            [3, :remove],
-          ])
-      end
-    end
-  end
-
-  describe "adds callbacks" do
-    context "model responds to after_commit" do
-      let(:model) {
-        Class.new do
-          def self.after_commit(arg=nil)
-            @after_commit ||= arg
-          end
-        end.tap { |c| c.send(:include, described_module) }
-      }
-
-      it "calls it with :apply_tessa_change_sets" do
-        expect(model.after_commit).to eq(:apply_tessa_change_sets)
-      end
-    end
-
-    context "model responds to before_destroy" do
-      let(:model) {
-        Class.new do
-          def self.before_destroy(arg=nil)
-            @before_destroy ||= arg
-          end
-        end.tap { |c| c.send(:include, described_module) }
-      }
-
-      it "calls it with :remove_all_tessa_assets" do
-        expect(model.before_destroy).to eq(:remove_all_tessa_assets)
-      end
-    end
-  end
-
 end
