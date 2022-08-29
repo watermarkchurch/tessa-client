@@ -14,6 +14,30 @@ module Tessa
 
     module InstanceMethods
 
+      def pending_tessa_change_sets
+        @pending_tessa_change_sets ||= Hash.new { AssetChangeSet.new }
+      end
+
+      def apply_tessa_change_sets
+        # Pretend like the application was successful but we didn't do anything
+        # because everything is in ActiveStorage now
+        pending_tessa_change_sets.clear
+      end
+
+      def remove_all_tessa_assets
+        self.class.tessa_fields.each do |name, field|
+          change_set = pending_tessa_change_sets[name]
+          field.ids(on: self).each do |asset_id|
+            change_set.remove(asset_id)
+          end
+          pending_tessa_change_sets[name] = change_set
+        end
+      end
+
+      def fetch_tessa_remote_assets(ids)
+        # This should just always return Tessa::AssetFailure
+        Tessa.find_assets(ids)
+      end
     end
 
     module ClassMethods
