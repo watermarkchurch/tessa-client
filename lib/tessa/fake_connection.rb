@@ -5,6 +5,9 @@ module Tessa
 
     [:get, :head, :put, :post, :patch, :delete].each do |method|
       define_method(method) do |*args|
+        if defined?(Bugsnag)
+          Bugsnag.notify("Tessa::FakeConnection##{method} invoked")
+        end
         Tessa::FakeConnection::Response.new()
       end
     end
