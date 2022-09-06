@@ -22,19 +22,11 @@ class Tessa::DynamicExtensions
             if #{name}_attachment.present?
               return Tessa::ActiveStorage::AssetWrapper.new(#{name}_attachment)
             end
-
-            # fall back to old Tessa fetch if not present
-            if field = self.class.tessa_fields["#{name}".to_sym]
-              @#{name} ||= fetch_tessa_remote_assets(field.id(on: self))
-            end
           end
 
           def #{field.id_field}
             # Use the attachment's key
             return #{name}_attachment.key if #{name}_attachment.present?
-
-            # fallback to Tessa's database column
-            super
           end
 
           def #{name}=(attachable)
@@ -80,7 +72,6 @@ class Tessa::DynamicExtensions
             
             @#{name} ||= [
               *#{name}_attachments.map { |a| Tessa::ActiveStorage::AssetWrapper.new(a) },
-              *fetch_tessa_remote_assets(tessa_ids)
             ]
           end
 
@@ -88,8 +79,6 @@ class Tessa::DynamicExtensions
             [
               # Use the attachment's key
               *#{name}_attachments.map(&:key),
-              # include from Tessa's database column
-              *super
             ]
           end
 
@@ -105,8 +94,8 @@ class Tessa::DynamicExtensions
                   existing.destroy
                 else
                   ids = self.#{field.id_field}
-                  ids.delete(change.id.to_i)
-                  self.#{field.id_field} = ids.any? ? ids : nil
+                  ids&.delete(change.id.to_i)
+                  self.#{field.id_field} = ids&.any? ? ids : nil
                 end
               end
               attachables.changes.select(&:add?).each do |change|
@@ -138,10 +127,7 @@ class Tessa::DynamicExtensions
     def build(mod)
       mod.class_eval <<~CODE, __FILE__, __LINE__ + 1
           attr_accessor :#{name}_id
-          attr_writer :#{name}
-          def #{name}
-            @#{name} ||= fetch_tessa_remote_assets(#{name}_id)
-          end
+          attr_accessor :#{name}
         CODE
       mod
     end
@@ -151,10 +137,7 @@ class Tessa::DynamicExtensions
     def build(mod)
       mod.class_eval <<~CODE, __FILE__, __LINE__ + 1
           attr_accessor :#{name}_ids
-          attr_writer :#{name}
-          def #{name}
-            @#{name} ||= fetch_tessa_remote_assets(#{name}_ids)
-          end
+          attr_accessor :#{name}
         CODE
       mod
     end

@@ -1,9 +1,9 @@
 require "tessa/version"
 
-require "faraday"
 require "virtus"
 require "json"
 
+require "tessa/fake_connection"
 require "tessa/config"
 require "tessa/response_factory"
 require "tessa/asset"

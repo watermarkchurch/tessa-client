@@ -24,16 +24,11 @@ RSpec.shared_examples_for "remote call macro" do |method, path, return_type|
   end
 
   context "when response is not successful" do
-    let(:faraday_stubs) {
-      Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.send(method, path) { |env| [422, {}, { "error" => "error" }.to_json] }
-      end
-    }
+    let(:connection) { Tessa::FakeConnection.new }
 
     it "raises Tessa::RequestFailed" do
       expect{ call }.to raise_error { |error|
         expect(error).to be_a(Tessa::RequestFailed)
-        expect(error.response).to be_a(Faraday::Response)
       }
     end
   end
