@@ -19,6 +19,10 @@ if defined?(ActiveJob)
   require "tessa/jobs/migrate_assets_job"
 end
 
+if defined?(SimpleForm)
+  require "tessa/simple_form"
+end
+
 module Tessa
   class << self
     def config
