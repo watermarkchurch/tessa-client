@@ -67,46 +67,4 @@ RSpec.describe Tessa::Config do
       expect(cfg.strategy).to eq("my-new-value")
     end
   end
-
-  describe "#connection" do
-    it "is a Faraday::Connection" do
-      expect(cfg.connection).to be_a(Faraday::Connection)
-    end
-
-    context "with values cfgured" do
-      subject { cfg.connection }
-      before { args.each { |k, v| cfg.send("#{k}=", v) } }
-      let(:args) {
-        {
-          url: "http://tessa.test",
-          username: "username",
-          password: "password",
-        }
-      }
-
-      it "sets faraday's url prefix to our url" do
-        expect(subject.url_prefix.to_s).to match(cfg.url)
-      end
-
-      context "with faraday spy" do
-        let(:spy) { instance_spy(Faraday::Connection) }
-        before do
-          expect(Faraday).to receive(:new).and_yield(spy)
-          subject
-        end
-
-        it "sets up url_encoded request handler" do
-          expect(spy).to have_received(:request).with(:url_encoded)
-        end
-
-        it "cfgures the default adapter" do
-          expect(spy).to have_received(:adapter).with(:net_http)
-        end
-      end
-    end
-
-    it "caches the result" do
-      expect(cfg.connection.object_id).to eq(cfg.connection.object_id)
-    end
-  end
 end

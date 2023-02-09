@@ -8,8 +8,6 @@ module Tessa
     def self.included(base)
       base.send :include, InstanceMethods
       base.extend ClassMethods
-      base.after_commit :apply_tessa_change_sets if base.respond_to?(:after_commit)
-      base.before_destroy :remove_all_tessa_assets if base.respond_to?(:before_destroy)
 
       Tessa.model_registry << base
     end
@@ -21,9 +19,9 @@ module Tessa
       end
 
       def apply_tessa_change_sets
-        pending_tessa_change_sets.delete_if do |_, change_set|
-          change_set.apply
-        end
+        # Pretend like the application was successful but we didn't do anything
+        # because everything is in ActiveStorage now
+        pending_tessa_change_sets.clear
       end
 
       def remove_all_tessa_assets
@@ -37,16 +35,8 @@ module Tessa
       end
 
       def fetch_tessa_remote_assets(ids)
+        # This should just always return Tessa::AssetFailure
         Tessa.find_assets(ids)
-      end
-
-      private def reapplying_asset?(field, change_set)
-        additions = change_set.changes.select(&:add?)
-
-        return false if additions.none?
-        return false if change_set.changes.size > additions.size
-
-        additions.all? { |a| field.ids(on: self).include?(a.id) }
       end
     end
 

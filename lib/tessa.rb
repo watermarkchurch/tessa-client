@@ -1,9 +1,9 @@
 require "tessa/version"
 
-require "faraday"
 require "virtus"
 require "json"
 
+require "tessa/fake_connection"
 require "tessa/config"
 require "tessa/response_factory"
 require "tessa/asset"
@@ -17,6 +17,10 @@ require "tessa/view_helpers"
 
 if defined?(ActiveJob)
   require "tessa/jobs/migrate_assets_job"
+end
+
+if defined?(SimpleForm)
+  require "tessa/simple_form"
 end
 
 module Tessa

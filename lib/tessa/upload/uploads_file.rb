@@ -13,8 +13,6 @@ class Tessa::Upload::UploadsFile
   end
 
   def self.connection_factory
-    Faraday.new do |conn|
-      conn.adapter Faraday.default_adapter
-    end
+    Tessa::FakeConnection.new
   end
 end
