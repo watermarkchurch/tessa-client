@@ -72,6 +72,14 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
           reupload(record, field_state)
           Rails.logger.info("#{record.class}#{record.id}##{field_state.field_name}: success")
           field_state.success_count += 1
+        rescue OpenURI::HTTPError => ex
+          if ex.message == "404 Not Found"
+            # clear out the field if the asset is missing
+            record.public_send("#{field_state.tessa_field.name}=", nil)
+            record.save!
+          else
+            Rails.logger.error("#{record.class}#{record.id}##{field_state.field_name}: error - #{ex}")
+          end
         rescue StandardError => ex
           Rails.logger.error("#{record.class}#{record.id}##{field_state.field_name}: error - #{ex}")
           field_state.offset += 1
