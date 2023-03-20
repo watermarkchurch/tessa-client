@@ -80,6 +80,7 @@ class Tessa::MigrateAssetsJob < ActiveJob::Base
           else
             Rails.logger.error("#{record.class}#{record.id}##{field_state.field_name}: error - #{ex}")
           end
+          field_state.offset += 1
         rescue StandardError => ex
           Rails.logger.error("#{record.class}#{record.id}##{field_state.field_name}: error - #{ex}")
           field_state.offset += 1
