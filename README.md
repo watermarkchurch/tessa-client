@@ -79,14 +79,13 @@ You can use Authentication around the engine to prevent unauthorized uploads.  W
 Note that this only works if you are using Sprockets.
 If you are using another bundler, we don't support that yet.
 
-3. In your model, use the Tessa `asset` declaration instead of `has_one_attached`.  The SimpleForm helper only works
-     with Tessa `asset` declarations so far.
+3. Ensure you configure your model with ActiveStorage
 
 ```rb
 class Model < ApplicationRecord
-    include Tessa::Model 
+    include Tessa::Model
 
-  asset :image # Note: this essentially delegates to has_one_attached
+  has_one_attached :image
 ```
 
 4. When rendering your form, use the SimpleForm helper to render the dropzone div:
