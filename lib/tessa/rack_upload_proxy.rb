@@ -15,9 +15,6 @@ module Tessa
         checksum: params["checksum"]
       })
 
-      env['rack.session'][:tessa_upload_asset_ids] ||= []
-      env['rack.session'][:tessa_upload_asset_ids] << blob.signed_id
-
       response = {
         asset_id: blob.signed_id,
         upload_url: blob.service_url_for_direct_upload,
@@ -26,8 +23,6 @@ module Tessa
       }
 
       [200, {"Content-Type" => "application/json"}, [response.to_json]]
-    rescue Tessa::RequestFailed
-      [500, {"Content-Type" => "application/json"}, [{ "error" => "Failed to retreive upload URL" }.to_json]]
     rescue ActiveRecord::NotNullViolation => e
       [400, {"Content-Type" => "application/json"}, [{ "error" => e.message }.to_json]]
     end
