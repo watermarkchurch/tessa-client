@@ -16,7 +16,7 @@ module Tessa
       })
 
       response = {
-        asset_id: blob.signed_id,
+        signed_id: blob.signed_id,
         upload_url: blob.service_url_for_direct_upload,
         upload_method: 'PUT', # ActiveStorage is always PUT
         upload_headers: blob.service_headers_for_direct_upload

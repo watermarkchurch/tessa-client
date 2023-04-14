@@ -4,7 +4,7 @@ import {FileChecksum} from '../activestorage/file_checksum'
 declare global {
   interface Window {
     WCC: any,
-    jQuery: any,
+    jQuery: typeof jQuery,
     Dropzone: typeof Dropzone,
   }
 }
@@ -18,14 +18,17 @@ interface WCCDropzoneFile extends Dropzone.DropzoneFile {
   uploadURL: string,
   uploadMethod: string,
   uploadHeaders: Record<string, string>,
-  assetID: string,
+  signedID: string,
 }
 
 const BaseDropzone = window.Dropzone
 class WCCDropzone extends BaseDropzone {
 
+  /**
+   * Performs a direct upload to the signed upload URL created in "accept".
+   * On complete, calls the Dropzone "success" callback.
+   */
   uploadFile(file: WCCDropzoneFile): void {
-    console.log('uploadFile', file)
     const xhr = new XMLHttpRequest()
     file.xhr = xhr
 
@@ -122,6 +125,9 @@ class WCCDropzone extends BaseDropzone {
   }
 }
 
+/**
+ * Called on page load to initialize the Dropzone
+ */
 function tessaInit() {
   $('.tessa-upload').each(function(i: number, item: HTMLElement) {
     const $item = $(item)
@@ -137,6 +143,38 @@ function tessaInit() {
     if ($item.hasClass("multiple")) { options.maxFiles = undefined }
 
     const dropzone = new WCCDropzone(item, options)
+
+    /**
+     * On load, if an asset already exists, add it's thumbnail to the dropzone.
+     */
+    $item.find('input[type="hidden"]').each(function(i: number, input: HTMLElement) {
+      const $input = $(input)
+      const mockFile = $input.data("meta")
+      if (!mockFile) { return }
+
+      mockFile.accepted = true
+      dropzone.options.addedfile?.call(dropzone, mockFile)
+      dropzone.options.thumbnail?.call(dropzone, mockFile, mockFile.url)
+      dropzone.emit("complete", mockFile)
+      dropzone.files.push(mockFile)
+    })
+
+    const inputName = $item.data('input-name') || $item.find('input[type="hidden"]').attr('name');
+
+    /**
+     * On successful dropzone upload, create the hidden input with the signed ID.
+     * On the server side, ActiveStorage can then use the signed ID to create an attachment to the blob.
+     */
+    dropzone.on('success', (file: WCCDropzoneFile) => {
+      $(`input[name="${inputName}"]`).val(file.signedID)
+    })
+
+    /**
+     * On dropzone file removal, delete the hidden input.  This removes the attachment from the record.
+     */
+    dropzone.on('removedfile', (file: WCCDropzoneFile) => {
+      $item.find(`input[name="${inputName}"]`).val('')
+    })
   })
 }
 
@@ -170,7 +208,7 @@ function accept(file: WCCDropzoneFile, done: (error?: string | Error) => void) {
         file.uploadURL = response.upload_url
         file.uploadMethod = response.upload_method
         file.uploadHeaders = response.upload_headers
-        file.assetID = response.asset_id
+        file.signedID = response.signed_id
         done()
       },
       error: (_response: any) => {
