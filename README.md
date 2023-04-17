@@ -23,6 +23,12 @@ When that migration is completed, v2.x of this gem will remove all code that acc
 will transition to being simply a convenience wrapper around ActiveStorage, so that we don't have to re-write as much
 of our code in our frontend apps.
 
+v6.x of this gem is compatible with ActiveStorage v6 and above.  Since v6, ActiveStorage now does everything that this
+gem used to do, with the exception of Dropzone integration.  Therefore, tessa-client v6 only contains the following
+two modules:
+1. A set of Javascript utilities to integrate Dropzone.js with ActiveStorage direct uploads
+2. A SimpleForm helper to write out the hidden input fields for an ActiveStorage `has_one_attached`.
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -61,17 +67,7 @@ from the user's browser.
 
 To get all this working, follow these steps:
 
-1. Mount the engine
-in your `config/routes.rb`, `mount Tessa::Engine, at: '/'`.  It's important that it is mounted at root.
-
-You can use Authentication around the engine to prevent unauthorized uploads.  With devise it's as simple as:
-```rb
-  authenticated :user do
-    mount Tessa::Engine, at: '/'
-  end
-```
-
-2. In your application.js, require the js libraries:
+1. In your application.js, require the js libraries:
 ```js
 //= require dropzone
 //= require tessa
@@ -79,16 +75,14 @@ You can use Authentication around the engine to prevent unauthorized uploads.  W
 Note that this only works if you are using Sprockets.
 If you are using another bundler, we don't support that yet.
 
-3. Ensure you configure your model with ActiveStorage
+2. use ActiveStorage to add an attached asset
 
 ```rb
 class Model < ApplicationRecord
-    include Tessa::Model
-
   has_one_attached :image
 ```
 
-4. When rendering your form, use the SimpleForm helper to render the dropzone div:
+3. When rendering your form, use the SimpleForm helper to render the dropzone div:
 
 ```erb
 <%= f.input :image,
@@ -97,7 +91,7 @@ class Model < ApplicationRecord
     hint: "Use an image that is 1440 x 288 in size (5:1 aspect ratio)" %>
 ```
 
-5. Configure your ActiveStorage service to accept direct uploads.
+4. Configure your ActiveStorage service to accept direct uploads.
     The disk service does this automatically.  The S3 service requires additional CORS configuration.
 
 ## Contributing
