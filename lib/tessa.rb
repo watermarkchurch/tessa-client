@@ -1,7 +1,5 @@
 require "tessa/version"
 
-require "tessa/rack_upload_proxy"
-
 if defined?(SimpleForm)
   require "tessa/simple_form"
 end

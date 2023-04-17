@@ -9,6 +9,7 @@ module Tessa
         "class" => "tessa-upload dropzone #{"multiple" if options[:multiple]}",
         "data-dropzone-options" => (options[:dropzone] || {}).to_json,
         "data-input-name" => "#{object_name}[#{attribute_name}]",
+        "data-direct-upload-url" => Rails.application.routes.url_helpers.rails_direct_uploads_path,
       )
     end
 

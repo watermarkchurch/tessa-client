@@ -1,5 +1,6 @@
 import type Dropzone from 'dropzone'
 import {FileChecksum} from '../activestorage/file_checksum'
+import type { ActiveStorageDirectUploadParams, ActiveStorageDirectUploadResponse } from './types'
 
 declare global {
   interface Window {
@@ -17,12 +18,17 @@ window.Dropzone.autoDiscover = false
 interface WCCDropzoneFile extends Dropzone.DropzoneFile {
   uploadURL: string,
   uploadMethod: string,
-  uploadHeaders: Record<string, string>,
+  uploadHeaders: Record<string, string> | undefined,
   signedID: string,
+}
+
+interface WCCDropzoneOptions extends Dropzone.DropzoneOptions {
+  directUploadURL: string,
 }
 
 const BaseDropzone = window.Dropzone
 class WCCDropzone extends BaseDropzone {
+  readonly options!: WCCDropzoneOptions
 
   /**
    * Performs a direct upload to the signed upload URL created in "accept".
@@ -133,12 +139,15 @@ const uploadPendingWarning = "File uploads have not yet completed. If you submit
 function tessaInit() {
   $('.tessa-upload').each(function(i: number, item: HTMLElement) {
     const $item = $(item)
-    const options: Dropzone.DropzoneOptions = {
+
+    const directUploadURL = $item.data('direct-upload-url') || '/rails/active_storage/direct_uploads'
+
+    const options: WCCDropzoneOptions = {
       maxFiles: 1,
       addRemoveLinks: true,
       url: 'UNUSED',
       dictDefaultMessage: 'Drop files or click to upload.',
-      accept: accept,
+      accept: createAcceptFn({ directUploadURL }),
       ...$item.data("dropzone-options")
     }
 
@@ -198,6 +207,10 @@ function tessaInit() {
   })
 }
 
+interface AcceptOptions {
+  directUploadURL: string
+}
+
 /**
  * Accepts a file upload from Dropzone, and creates an ActiveStorage blob via the Tessa::RackUploadProxy.
  *
@@ -207,36 +220,45 @@ function tessaInit() {
  * @param file Binary file data uploaded by the user
  * @param done Callback when file is accepted or rejected by the Tessa::RackUploadProxy
  */
-function accept(file: WCCDropzoneFile, done: (error?: string | Error) => void) {
-  const postData: Record<string, string | number | undefined> = {
-    name: file.name,
-    size: file.size,
-    mime_type: file.type
-  }
-
-  FileChecksum.create(file, (error, checksum) => {
-    if (error) {
-      return done(error)
+function createAcceptFn({ directUploadURL }: AcceptOptions) {
+  return function(file: WCCDropzoneFile, done: (error?: string | Error) => void) {
+    const postData: ActiveStorageDirectUploadParams = {
+      blob: {
+        filename: file.name,
+        byte_size: file.size,
+        content_type: file.type,
+        checksum: ''
+      }
     }
 
-    postData['checksum'] = checksum
-
-    $.ajax('/tessa/uploads', {
-      type: 'POST',
-      data: postData,
-      success: (response: Record<string, any>) => {
-        file.uploadURL = response.upload_url
-        file.uploadMethod = response.upload_method
-        file.uploadHeaders = response.upload_headers
-        file.signedID = response.signed_id
-        done()
-      },
-      error: (_response: any) => {
-        done("Failed to initiate the upload process!")
+    FileChecksum.create(file, (error, checksum) => {
+      if (error) {
+        return done(error)
       }
-    })
+      if (!checksum) {
+        return done(`Failed to generate checksum for file '${file.name}'`)
+      }
 
-  })
+      postData.blob['checksum'] = checksum
+
+      $.ajax(directUploadURL, {
+        type: 'POST',
+        data: postData,
+        success: (response: ActiveStorageDirectUploadResponse) => {
+          file.uploadURL = response.direct_upload.url
+          file.uploadMethod = 'PUT' // ActiveStorage is always PUT
+          file.uploadHeaders = response.direct_upload.headers
+          file.signedID = response.signed_id
+          done()
+        },
+        error: (response: any) => {
+          console.error(response)
+          done("Failed to initiate the upload process!")
+        }
+      })
+
+    })
+  }
 }
 
 $(tessaInit)
