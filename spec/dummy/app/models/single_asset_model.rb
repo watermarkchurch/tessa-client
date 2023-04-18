@@ -1,5 +1,5 @@
 class SingleAssetModel < ActiveRecord::Base
   include Tessa::Model
 
-  asset :avatar
+  has_one_attached :asset
 end
