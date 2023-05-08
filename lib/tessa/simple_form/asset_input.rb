@@ -18,7 +18,7 @@ module Tessa
     def hidden_fields_for(attribute_name)
       asset = object.public_send(attribute_name)
       unless asset&.key.present?
-        return @builder.hidden_field("#{attribute_name}")
+        return @builder.hidden_field("#{attribute_name}", value: nil)
       end
 
       @builder.hidden_field("#{attribute_name}",
