@@ -29,7 +29,7 @@ module Tessa
           data: {
             meta: meta_for_blob(asset).merge({
               # this allows us to find the hidden HTML input to remove it if we remove the asset
-              "signedID" => blob.key,
+              "signedID" => asset.key,
             })
           }
         })
