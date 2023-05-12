@@ -24,7 +24,7 @@ module Tessa
       end
 
       if asset&.key.present?
-        @builder.hidden_field("#{attribute_name}", {
+        return @builder.hidden_field("#{attribute_name}", {
           value: asset.key,
           data: {
             meta: meta_for_blob(asset).merge({
