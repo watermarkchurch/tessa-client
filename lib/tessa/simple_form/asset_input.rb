@@ -25,11 +25,11 @@ module Tessa
 
       if asset&.key.present?
         return @builder.hidden_field("#{attribute_name}", {
-          value: asset.key,
+          value: asset.signed_id,
           data: {
             meta: meta_for_blob(asset).merge({
               # this allows us to find the hidden HTML input to remove it if we remove the asset
-              "signedID" => asset.key,
+              "signedID" => asset.signed_id,
             })
           }
         })
