@@ -133,6 +133,10 @@ class WCCDropzone extends BaseDropzone {
 
 const uploadPendingWarning = "File uploads have not yet completed. If you submit the form now they will not be saved. Are you sure you want to continue?"
 
+const kb = 1000
+const mb = 1000 * kb
+const gb = 1000 * mb
+
 /**
  * Called on page load to initialize the Dropzone
  */
@@ -144,6 +148,9 @@ function tessaInit() {
 
     const options: WCCDropzoneOptions = {
       maxFiles: 1,
+      // With a single PUT operation, you can upload a single object up to 5 GB in size.
+      // https://docs.aws.amazon.com/AmazonS3/latest/userguide/upload-objects.html
+      maxFilesize: 5 * gb,
       addRemoveLinks: true,
       url: 'UNUSED',
       dictDefaultMessage: 'Drop files or click to upload.',
@@ -221,7 +228,16 @@ interface AcceptOptions {
  * @param done Callback when file is accepted or rejected by the Tessa::RackUploadProxy
  */
 function createAcceptFn({ directUploadURL }: AcceptOptions) {
-  return function(file: WCCDropzoneFile, done: (error?: string | Error) => void) {
+  return function(this: WCCDropzone, file: WCCDropzoneFile, done: (error?: string | Error) => void) {
+    console.log('check file size', file.size, this.options.maxFilesize)
+    if (this.options.maxFilesize && file.size > this.options.maxFilesize) {
+      return done(
+        `Uploads are limited to ${Math.floor(this.options.maxFilesize / gb)} Gigabytes.` +
+        ` Your file is ${(file.size / gb).toFixed(2)} GB.` +
+        ` Please contact helpdesk for assistance.`
+      )
+    }
+    
     const postData: ActiveStorageDirectUploadParams = {
       blob: {
         filename: file.name,
