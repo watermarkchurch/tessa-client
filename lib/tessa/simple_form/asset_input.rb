@@ -60,7 +60,7 @@ module Tessa
         "name" => blob.filename,
         "size" => blob.byte_size,
         "mimeType" => blob.content_type,
-        "url" => blob.service_url(disposition: :inline, expires_in: 1.hour),
+        "url" => blob.url,
       }.as_json
     end
   end
