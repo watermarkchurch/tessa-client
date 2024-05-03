@@ -54,8 +54,8 @@ workflows:
   build:
     jobs:
       - test:
-          name: test_ruby-2.4
-          ruby: 2.4.10
+          name: test_ruby-2.5
+          ruby: 2.5.9
       - test:
           name: test_ruby-2.7
           ruby: 2.7.8

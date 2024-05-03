@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/watermarkchurch/tessa-client"
   spec.license       = "MIT"
 
-  spec.required_ruby_version = '>= 2.4'
+  spec.required_ruby_version = '>= 2.5'
 
   spec.files         = `git ls-files -z`.split("\x0").push(
     'app/assets/javascripts/tessa.js',
@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.1"
   spec.add_development_dependency "rspec_junit_formatter", "~> 0.4"
   spec.add_development_dependency "simplecov", "~> 0.15.1"
-  spec.add_development_dependency "rails", "~> 6"
+  spec.add_development_dependency "rails", ">= 6"
   spec.add_development_dependency 'sqlite3', '~> 1.4'
   spec.add_development_dependency 'listen'
 end
