@@ -1,12 +1,21 @@
 version: 2.1
 
-jobs:
-  build:
+executors:
+  ruby:
+    parameters:
+      version:
+        type: string
     docker:
-      # specify the version you desire here
-      - image: cimg/ruby:2.6.10-node
-        environment:
-          BUNDLE_PATH: ~/vendor/bundle
+      - image: cimg/ruby:<< parameters.version >>-node
+
+jobs:
+  test:
+    parameters:
+      ruby:
+        type: string
+    executor:
+      name: ruby
+      version: << parameters.ruby >>
     steps:
       - checkout
 
@@ -40,3 +49,19 @@ jobs:
       # Lint
       - run: yarn lint
       - run: yarn build
+      
+workflows:
+  build:
+    jobs:
+      - test:
+          name: test_ruby-2.3.8
+          ruby: 2.3.8
+      - test:
+          name: test_ruby-2.7.8
+          ruby: 2.7.8
+      - test:
+          name: test_ruby-3.0.6
+          ruby: 3.0.6
+      - test:
+          name: test_ruby-3.3.1
+          ruby: 3.3.1
