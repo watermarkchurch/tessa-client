@@ -55,13 +55,13 @@ workflows:
     jobs:
       - test:
           name: test_ruby-2.4
-          ruby: 2.4
+          ruby: 2.4.10
       - test:
           name: test_ruby-2.7
-          ruby: 2.7
+          ruby: 2.7.8
       - test:
           name: test_ruby-3.0
-          ruby: 3.0
+          ruby: 3.0.7
       - test:
           name: test_ruby-3.3
-          ruby: 3.3
+          ruby: 3.3.1
