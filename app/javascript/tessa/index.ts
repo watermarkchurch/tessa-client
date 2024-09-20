@@ -277,4 +277,6 @@ function createAcceptFn({ directUploadURL }: AcceptOptions) {
   }
 }
 
+window.WCC.tessaInit = tessaInit
+
 $(tessaInit)
